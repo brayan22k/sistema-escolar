@@ -1,12 +1,18 @@
 import express from 'express';
 import cors from 'cors';
 import sequelize from './config/database.js';
+import Aluno from './models/Aluno.js';
+import Turma from './models/Turma.js';
 import routes from './routes/index.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const DB_RETRY_DELAY_MS = Number(process.env.DB_RETRY_DELAY_MS || 5000);
 const DB_SYNC_FORCE = String(process.env.DB_SYNC_FORCE || 'false').toLowerCase() === 'true';
+const DB_SYNC_ALTER = String(process.env.DB_SYNC_ALTER || 'true').toLowerCase() === 'true';
+
+Turma.hasMany(Aluno, { foreignKey: 'turma_id', as: 'alunos' });
+Aluno.belongsTo(Turma, { foreignKey: 'turma_id', as: 'turma' });
 
 // Middlewares
 app.use(cors());
@@ -26,7 +32,7 @@ async function connectDatabaseWithRetry() {
       await sequelize.authenticate();
       console.log('Conexao com o banco de dados estabelecida com sucesso!');
 
-      await sequelize.sync({ force: DB_SYNC_FORCE });
+      await sequelize.sync({ force: DB_SYNC_FORCE, alter: DB_SYNC_ALTER });
       console.log('Banco de dados sincronizado com sucesso!');
       return;
     } catch (error) {

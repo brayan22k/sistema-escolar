@@ -3,13 +3,17 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Container,
   Grid,
   MenuItem,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
@@ -24,19 +28,30 @@ const initialForm = {
   endereco: '',
 };
 
+const initialTurmaForm = {
+  nome: '',
+  serie: '',
+  ano: new Date().getFullYear().toString(),
+};
+
 const menuItems = [
   { key: 'dashboard', label: 'Início', description: 'Visão geral do sistema' },
   { key: 'alunos', label: 'Alunos', description: 'Cadastro e consulta de estudantes' },
-  { key: 'professores', label: 'Professores', description: 'Gestão da equipe' },
   { key: 'turmas', label: 'Turmas', description: 'Organização escolar' },
-  { key: 'financeiro', label: 'Financeiro', description: 'Mensalidades e contas' },
-  { key: 'relatorios', label: 'Relatórios', description: 'Indicadores da escola' },
 ];
 
 function App() {
   const [form, setForm] = useState(initialForm);
   const [alunos, setAlunos] = useState([]);
+  const [turmas, setTurmas] = useState([]);
+  const [turmaForm, setTurmaForm] = useState(initialTurmaForm);
+  const [alunosSelecionados, setAlunosSelecionados] = useState({});
+  const [alunoBusca, setAlunoBusca] = useState('');
+  const [turmaBusca, setTurmaBusca] = useState('');
+  const [alunoEmEdicao, setAlunoEmEdicao] = useState(null);
+  const [turmaEmEdicao, setTurmaEmEdicao] = useState(null);
   const [message, setMessage] = useState('');
+  const [turmaMessage, setTurmaMessage] = useState('');
   const [view, setView] = useState('dashboard');
   const [loggedIn, setLoggedIn] = useState(false);
   const [loginForm, setLoginForm] = useState({ usuario: '', senha: '' });
@@ -52,10 +67,19 @@ function App() {
     }
   };
 
+  const carregarTurmas = async () => {
+    try {
+      const response = await fetch('/api/turmas');
+      if (!response.ok) throw new Error('Erro ao carregar turmas');
+      setTurmas(await response.json());
+    } catch (error) {
+      setTurmaMessage(error.message);
+    }
+  };
+
   useEffect(() => {
-    // Missao 001: carrega dados do modulo de alunos.
-    // Proximas missoes: criar novas funcoes de carga (ex.: carregarTurmas) neste mesmo padrao.
     carregarAlunos();
+    carregarTurmas();
   }, []);
 
   const handleChange = (event) => {
@@ -75,11 +99,64 @@ function App() {
     }
   };
 
+  const handleTurmaChange = (event) => {
+    const { name, value } = event.target;
+    setTurmaForm({ ...turmaForm, [name]: value });
+  };
+
+  const handleTurmaSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await fetch(turmaEmEdicao ? `/api/turmas/${turmaEmEdicao}` : '/api/turmas', {
+        method: turmaEmEdicao ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(turmaForm),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.erro || 'Erro ao cadastrar turma');
+      }
+
+      setTurmaMessage(turmaEmEdicao ? 'Turma atualizada com sucesso!' : 'Turma cadastrada com sucesso!');
+      setTurmaForm(initialTurmaForm);
+      setTurmaEmEdicao(null);
+      carregarTurmas();
+    } catch (error) {
+      setTurmaMessage(error.message);
+    }
+  };
+
+  const vincularAluno = async (turmaId) => {
+    const alunoId = alunosSelecionados[turmaId];
+    if (!alunoId) return;
+
+    try {
+      const response = await fetch(`/api/turmas/${turmaId}/alunos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alunoId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.erro || 'Erro ao vincular aluno');
+      }
+
+      setTurmaMessage('Aluno vinculado com sucesso!');
+      setAlunosSelecionados({ ...alunosSelecionados, [turmaId]: '' });
+      carregarAlunos();
+      carregarTurmas();
+    } catch (error) {
+      setTurmaMessage(error.message);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await fetch('/api/alunos', {
-        method: 'POST',
+      const response = await fetch(alunoEmEdicao ? `/api/alunos/${alunoEmEdicao}` : '/api/alunos', {
+        method: alunoEmEdicao ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
@@ -89,13 +166,65 @@ function App() {
         throw new Error(errorText || 'Erro ao cadastrar aluno');
       }
 
-      setMessage('Aluno cadastrado com sucesso!');
+      setMessage(alunoEmEdicao ? 'Aluno atualizado com sucesso!' : 'Aluno cadastrado com sucesso!');
       setForm(initialForm);
+      setAlunoEmEdicao(null);
       carregarAlunos();
     } catch (error) {
       setMessage(error.message);
     }
   };
+
+  const editarAluno = (aluno) => {
+    setAlunoEmEdicao(aluno.id);
+    setForm({
+      nome: aluno.nome || '',
+      email: aluno.email || '',
+      data_nascimento: aluno.data_nascimento || '',
+      serie: aluno.serie || '',
+      cpf: aluno.cpf || '',
+      telefone: aluno.telefone || '',
+      endereco: aluno.endereco || '',
+    });
+    setView('alunos');
+  };
+
+  const excluirAluno = async (aluno) => {
+    if (!window.confirm(`Excluir o aluno ${aluno.nome}?`)) return;
+    const response = await fetch(`/api/alunos/${aluno.id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      setMessage('Não foi possível excluir o aluno.');
+      return;
+    }
+    setMessage('Aluno excluído com sucesso!');
+    carregarAlunos();
+  };
+
+  const editarTurma = (turma) => {
+    setTurmaEmEdicao(turma.id);
+    setTurmaForm({ nome: turma.nome, serie: turma.serie, ano: String(turma.ano) });
+    setView('turmas');
+  };
+
+  const excluirTurma = async (turma) => {
+    if (!window.confirm(`Excluir a turma ${turma.nome}? Os alunos serão desassociados.`)) return;
+    const response = await fetch(`/api/turmas/${turma.id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      setTurmaMessage('Não foi possível excluir a turma.');
+      return;
+    }
+    setTurmaMessage('Turma excluída com sucesso!');
+    carregarAlunos();
+    carregarTurmas();
+  };
+
+  const alunosFiltrados = alunos.filter((aluno) => (
+    `${aluno.nome} ${aluno.email} ${aluno.serie}`.toLowerCase().includes(alunoBusca.toLowerCase())
+  ));
+
+  const turmasFiltradas = turmas.filter((turma) => (
+    `${turma.nome} ${turma.serie} ${turma.ano}`.toLowerCase().includes(turmaBusca.toLowerCase())
+  ));
 
   if (!loggedIn) {
     return (
@@ -181,7 +310,6 @@ function App() {
             ))}
           </Grid>
 
-          {/* Estrategia pedagogica: cada tela deve virar um modulo separado com sua regra e seu formulario. */}
           {view === 'alunos' ? (
             <Box>
               <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
@@ -228,36 +356,109 @@ function App() {
 
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
                     <Button type="submit" variant="contained" size="large">
-                      Salvar aluno
+                      {alunoEmEdicao ? 'Atualizar aluno' : 'Salvar aluno'}
                     </Button>
-                    <Button variant="outlined" size="large" onClick={() => setForm(initialForm)}>
+                    <Button variant="outlined" size="large" onClick={() => { setForm(initialForm); setAlunoEmEdicao(null); }}>
                       Limpar
                     </Button>
                   </Stack>
                 </form>
               </Paper>
 
-              <Card sx={{ mt: 4 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Alunos cadastrados
-                  </Typography>
-                  {alunos.length === 0 ? (
+              <Paper variant="outlined" sx={{ mt: 4, p: 2 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+                  <Typography variant="h6">Lista de alunos</Typography>
+                  <TextField size="small" label="Buscar aluno" value={alunoBusca} onChange={(event) => setAlunoBusca(event.target.value)} />
+                </Stack>
+                {alunosFiltrados.length === 0 ? (
                     <Typography color="text.secondary">Nenhum aluno cadastrado ainda.</Typography>
                   ) : (
-                    <Stack spacing={1}>
-                      {alunos.map((aluno) => (
-                        <Box key={aluno.id} sx={{ p: 1.5, border: '1px solid #e0e0e0', borderRadius: 2 }}>
-                          <Typography fontWeight={600}>{aluno.nome}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {aluno.email} • {aluno.serie}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Stack>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead><TableRow><TableCell>Nome</TableCell><TableCell>E-mail</TableCell><TableCell>Série</TableCell><TableCell align="right">Ações</TableCell></TableRow></TableHead>
+                      <TableBody>{alunosFiltrados.map((aluno) => (
+                        <TableRow key={aluno.id} hover>
+                          <TableCell>{aluno.nome}</TableCell><TableCell>{aluno.email}</TableCell><TableCell>{aluno.serie}</TableCell>
+                          <TableCell align="right"><Button size="small" onClick={() => editarAluno(aluno)}>Editar</Button><Button size="small" color="error" onClick={() => excluirAluno(aluno)}>Excluir</Button></TableCell>
+                        </TableRow>
+                      ))}</TableBody>
+                    </Table>
+                  </TableContainer>
                   )}
-                </CardContent>
-              </Card>
+              </Paper>
+            </Box>
+          ) : view === 'turmas' ? (
+            <Box>
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
+                Gestão de Turmas
+              </Typography>
+
+              {turmaMessage && (
+                <Alert severity={turmaMessage.includes('sucesso') ? 'success' : 'error'} sx={{ mb: 2 }}>
+                  {turmaMessage}
+                </Alert>
+              )}
+
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+                <form onSubmit={handleTurmaSubmit}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Nome da turma" name="nome" value={turmaForm.nome} onChange={handleTurmaChange} placeholder="Ex.: 3º DS" required />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField select fullWidth label="Série" name="serie" value={turmaForm.serie} onChange={handleTurmaChange} required>
+                        <MenuItem value="1º Ano">1º Ano</MenuItem>
+                        <MenuItem value="2º Ano">2º Ano</MenuItem>
+                        <MenuItem value="3º Ano">3º Ano</MenuItem>
+                        <MenuItem value="4º Ano">4º Ano</MenuItem>
+                        <MenuItem value="5º Ano">5º Ano</MenuItem>
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Ano letivo" name="ano" type="number" value={turmaForm.ano} onChange={handleTurmaChange} inputProps={{ min: 2000, max: 2100 }} required />
+                    </Grid>
+                  </Grid>
+
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
+                    <Button type="submit" variant="contained" size="large">{turmaEmEdicao ? 'Atualizar turma' : 'Salvar turma'}</Button>
+                    <Button variant="outlined" size="large" onClick={() => { setTurmaForm(initialTurmaForm); setTurmaEmEdicao(null); }}>Limpar</Button>
+                  </Stack>
+                </form>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+                  <Typography variant="h6">Lista de turmas</Typography>
+                  <TextField size="small" label="Buscar turma" value={turmaBusca} onChange={(event) => setTurmaBusca(event.target.value)} />
+                </Stack>
+                {turmasFiltradas.length === 0 ? <Typography color="text.secondary">Nenhuma turma cadastrada ainda.</Typography> : (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead><TableRow><TableCell>Turma</TableCell><TableCell>Série</TableCell><TableCell>Ano</TableCell><TableCell>Alunos</TableCell><TableCell align="right">Ações</TableCell></TableRow></TableHead>
+                      <TableBody>{turmasFiltradas.map((turma) => {
+                  const alunosVinculados = turma.alunos || [];
+                  const alunosDisponiveis = alunos.filter((aluno) => !aluno.turma_id);
+
+                  return (
+                    <TableRow key={turma.id} hover>
+                      <TableCell>{turma.nome}</TableCell><TableCell>{turma.serie}</TableCell><TableCell>{turma.ano}</TableCell><TableCell>{alunosVinculados.length}</TableCell>
+                      <TableCell align="right"><Button size="small" onClick={() => editarTurma(turma)}>Editar</Button><Button size="small" color="error" onClick={() => excluirTurma(turma)}>Excluir</Button></TableCell>
+                    </TableRow>
+                  );
+                })}</TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Paper>
+
+              <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Alunos por turma</Typography>
+                {turmasFiltradas.map((turma) => {
+                  const alunosVinculados = turma.alunos || [];
+                  const alunosDisponiveis = alunos.filter((aluno) => !aluno.turma_id);
+                  return <Box key={turma.id} sx={{ mb: 2 }}><Typography fontWeight={600}>{turma.nome}</Typography><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1 }}><TextField select fullWidth size="small" label="Adicionar aluno" value={alunosSelecionados[turma.id] || ''} onChange={(event) => setAlunosSelecionados({ ...alunosSelecionados, [turma.id]: event.target.value })}>{alunosDisponiveis.map((aluno) => <MenuItem key={aluno.id} value={aluno.id}>{aluno.nome}</MenuItem>)}</TextField><Button variant="outlined" onClick={() => vincularAluno(turma.id)} disabled={!alunosSelecionados[turma.id]}>Vincular</Button></Stack><Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{alunosVinculados.length ? alunosVinculados.map((aluno) => aluno.nome).join(', ') : 'Nenhum aluno vinculado.'}</Typography></Box>;
+                })}
+              </Paper>
             </Box>
           ) : (
             <Paper variant="outlined" sx={{ p: 4, borderRadius: 3 }}>
@@ -265,8 +466,7 @@ function App() {
                 {menuItems.find((item) => item.key === view)?.label}
               </Typography>
               <Typography color="text.secondary">
-                Esta area ficara disponivel para a proxima etapa do sistema escolar.
-                Para a Missao 002, criem um componente/modulo proprio para Turmas antes de adicionar regras aqui.
+                Selecione uma opção no menu para começar.
               </Typography>
             </Paper>
           )}

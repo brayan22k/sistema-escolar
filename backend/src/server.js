@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import sequelize from './config/database.js';
 import routes from './routes/index.js';
+import './models/associations.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);

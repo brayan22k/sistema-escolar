@@ -1,12 +1,62 @@
 // backend/src/routes/alunos/routes.js
+
 import express from 'express';
-import alunoController from '../../controllers/alunoController.js';
+
+import alunoController
+    from '../../controllers/alunoController.js';
+
 
 const routes = express.Router();
 
-// Quando o React enviar um POST para /alunos, o controlador será ativado [18, 19]
-routes.get('/alunos', alunoController.listarAlunos);
-routes.post('/alunos', alunoController.cadastrarAluno);
+
+// ======================================================
+// ALUNOS
+// ======================================================
+
+// LISTAR
+routes.get(
+    '/alunos',
+    alunoController.listarAlunos
+);
+
+
+// CADASTRAR
+routes.post(
+    '/alunos',
+    alunoController.cadastrarAluno
+);
+
+
+// BUSCAR POR ID
+routes.get(
+    '/alunos/:id',
+    alunoController.buscarAluno
+);
+
+
+// EDITAR
+routes.put(
+    '/alunos/:id',
+    alunoController.editarAluno
+);
+
+
+// EXCLUIR
+routes.delete(
+    '/alunos/:id',
+    alunoController.excluirAluno
+);
+
+
+// ======================================================
+// MISSÃO 002
+// VINCULAR ALUNO À TURMA
+// ======================================================
+
+routes.put(
+    '/alunos/:id/turma',
+    alunoController.vincularTurma
+);
+
 
 export default routes;
-

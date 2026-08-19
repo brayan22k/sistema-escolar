@@ -40,4 +40,4 @@ routes.use(notasRoutes);
 routes.use(professoresRoutes);
 
 
-export default routes;
+export default routes;  

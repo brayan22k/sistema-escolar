@@ -19,6 +19,7 @@ import Turmas from './Turmas.jsx';
 import Notas from './Notas.jsx';
 import Alunos from './Alunos.jsx';
 import Professores from './Professores.jsx';
+import Disciplinas from './Disciplinas.jsx';
 
 const drawerWidth = 240;
 
@@ -50,6 +51,12 @@ function App() {
             key: 'turmas',
             label: 'Turmas',
             description: 'Organização escolar'
+        },
+
+        {
+            key: 'disciplinas',
+            label: 'Disciplinas',
+            description: 'Cadastro de disciplinas'
         },
 
         {
@@ -262,6 +269,17 @@ function App() {
                     {view === 'turmas' && (
 
                         <Turmas />
+
+                    )}
+
+
+                    {/* ======================================
+                        DISCIPLINAS
+                    ====================================== */}
+
+                    {view === 'disciplinas' && (
+
+                        <Disciplinas />
 
                     )}
 

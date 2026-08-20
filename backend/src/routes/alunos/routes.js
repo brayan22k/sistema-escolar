@@ -1,10 +1,6 @@
-// backend/src/routes/alunos/routes.js
-
 import express from 'express';
 
-import alunoController
-    from '../../controllers/alunoController.js';
-
+import alunoController from '../../controllers/alunoController.js';
 
 const routes = express.Router();
 
@@ -13,35 +9,40 @@ const routes = express.Router();
 // ALUNOS
 // ======================================================
 
-// LISTAR
+// LISTAR ALUNOS
+// GET /alunos
 routes.get(
     '/alunos',
     alunoController.listarAlunos
 );
 
 
-// CADASTRAR
+// CADASTRAR ALUNO
+// POST /alunos
 routes.post(
     '/alunos',
     alunoController.cadastrarAluno
 );
 
 
-// BUSCAR POR ID
+// BUSCAR ALUNO POR ID
+// GET /alunos/:id
 routes.get(
     '/alunos/:id',
     alunoController.buscarAluno
 );
 
 
-// EDITAR
+// EDITAR ALUNO
+// PUT /alunos/:id
 routes.put(
     '/alunos/:id',
     alunoController.editarAluno
 );
 
 
-// EXCLUIR
+// EXCLUIR ALUNO
+// DELETE /alunos/:id
 routes.delete(
     '/alunos/:id',
     alunoController.excluirAluno
@@ -49,10 +50,10 @@ routes.delete(
 
 
 // ======================================================
-// MISSÃO 002
 // VINCULAR ALUNO À TURMA
 // ======================================================
 
+// PUT /alunos/:id/turma
 routes.put(
     '/alunos/:id/turma',
     alunoController.vincularTurma

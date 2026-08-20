@@ -15,17 +15,20 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper
+    Paper,
+    MenuItem
 } from '@mui/material';
 
 
 function Alunos() {
 
     const [alunos, setAlunos] = useState([]);
+    const [turmas, setTurmas] = useState([]);
 
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [dataNascimento, setDataNascimento] = useState('');
+    const [fkTurma, setFkTurma] = useState('');
 
     const [mensagem, setMensagem] = useState('');
 
@@ -45,7 +48,9 @@ function Alunos() {
             );
 
             if (!resposta.ok) {
-                throw new Error('Erro ao buscar alunos');
+                throw new Error(
+                    'Erro ao buscar alunos'
+                );
             }
 
             const dados = await resposta.json();
@@ -65,9 +70,49 @@ function Alunos() {
     }
 
 
+    // ==========================================
+    // CARREGAR TURMAS
+    // ==========================================
+
+    async function carregarTurmas() {
+
+        try {
+
+            const resposta = await fetch(
+                'http://localhost:3000/turmas'
+            );
+
+            if (!resposta.ok) {
+                throw new Error(
+                    'Erro ao buscar turmas'
+                );
+            }
+
+            const dados = await resposta.json();
+
+            setTurmas(dados);
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            setMensagem(
+                'Não foi possível carregar as turmas.'
+            );
+
+        }
+
+    }
+
+
+    // ==========================================
+    // CARREGAR DADOS
+    // ==========================================
+
     useEffect(() => {
 
         carregarAlunos();
+        carregarTurmas();
 
     }, []);
 
@@ -81,14 +126,14 @@ function Alunos() {
         setNome('');
         setEmail('');
         setDataNascimento('');
-
+        setFkTurma('');
         setEditandoId(null);
 
     }
 
 
     // ==========================================
-    // VALIDAR DATA DE NASCIMENTO
+    // VALIDAR DATA
     // ==========================================
 
     function validarDataNascimento(data) {
@@ -101,11 +146,16 @@ function Alunos() {
             `${data}T00:00:00`
         );
 
-        if (Number.isNaN(dataInformada.getTime())) {
+        if (
+            Number.isNaN(
+                dataInformada.getTime()
+            )
+        ) {
             return false;
         }
 
-        const ano = dataInformada.getFullYear();
+        const ano =
+            dataInformada.getFullYear();
 
         return ano > 2000 && ano < 2028;
 
@@ -122,9 +172,11 @@ function Alunos() {
             return '';
         }
 
-        const valor = String(data).substring(0, 10);
+        const valor =
+            String(data).substring(0, 10);
 
-        const partes = valor.split('-');
+        const partes =
+            valor.split('-');
 
         if (partes.length !== 3) {
             return data;
@@ -136,7 +188,38 @@ function Alunos() {
 
 
     // ==========================================
-    // CADASTRAR / EDITAR ALUNO
+    // NOME DA TURMA
+    // ==========================================
+
+    function nomeDaTurma(aluno) {
+
+        if (!aluno.fk_turma) {
+            return 'Sem turma';
+        }
+
+        const turma =
+            turmas.find(
+                (item) =>
+                    Number(item.id) ===
+                    Number(aluno.fk_turma)
+            );
+
+        if (!turma) {
+            return `Turma ${aluno.fk_turma}`;
+        }
+
+        return (
+            turma.nome ||
+            turma.descricao ||
+            turma.turma ||
+            `Turma ${turma.id}`
+        );
+
+    }
+
+
+    // ==========================================
+    // SALVAR ALUNO
     // ==========================================
 
     async function salvarAluno(event) {
@@ -179,7 +262,11 @@ function Alunos() {
         }
 
 
-        if (!validarDataNascimento(dataNascimento)) {
+        if (
+            !validarDataNascimento(
+                dataNascimento
+            )
+        ) {
 
             setMensagem(
                 'A data de nascimento deve ter ano entre 2001 e 2027.'
@@ -194,13 +281,25 @@ function Alunos() {
 
             const dadosAluno = {
 
-                nome: nome,
+                nome: nome.trim(),
 
-                email: email,
+                email: email.trim(),
 
-                data_nascimento: dataNascimento
+                data_nascimento:
+                    dataNascimento,
+
+                fk_turma:
+                    fkTurma
+                        ? Number(fkTurma)
+                        : null
 
             };
+
+
+            console.log(
+                'Dados enviados:',
+                dadosAluno
+            );
 
 
             let resposta;
@@ -256,14 +355,32 @@ function Alunos() {
             }
 
 
+            // ==================================
+            // LER RESPOSTA
+            // ==================================
+
+            const textoResposta =
+                await resposta.text();
+
+            console.log(
+                'Resposta do servidor:',
+                textoResposta
+            );
+
+
             if (!resposta.ok) {
 
                 throw new Error(
-                    'Erro ao salvar aluno'
+                    textoResposta ||
+                    `Erro HTTP ${resposta.status}`
                 );
 
             }
 
+
+            // ==================================
+            // SUCESSO
+            // ==================================
 
             setMensagem(
                 editandoId
@@ -279,9 +396,14 @@ function Alunos() {
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'ERRO COMPLETO AO SALVAR ALUNO:',
+                erro
+            );
+
 
             setMensagem(
+                erro.message ||
                 'Erro ao salvar o aluno.'
             );
 
@@ -291,14 +413,18 @@ function Alunos() {
 
 
     // ==========================================
-    // EDITAR
+    // EDITAR ALUNO
     // ==========================================
 
     function editarAluno(aluno) {
 
-        setNome(aluno.nome || '');
+        setNome(
+            aluno.nome || ''
+        );
 
-        setEmail(aluno.email || '');
+        setEmail(
+            aluno.email || ''
+        );
 
         setDataNascimento(
             aluno.data_nascimento
@@ -308,7 +434,15 @@ function Alunos() {
                 : ''
         );
 
-        setEditandoId(aluno.id);
+        setFkTurma(
+            aluno.fk_turma
+                ? String(aluno.fk_turma)
+                : ''
+        );
+
+        setEditandoId(
+            aluno.id
+        );
 
         setMensagem('');
 
@@ -316,7 +450,7 @@ function Alunos() {
 
 
     // ==========================================
-    // EXCLUIR
+    // EXCLUIR ALUNO
     // ==========================================
 
     async function excluirAluno(id) {
@@ -334,17 +468,23 @@ function Alunos() {
 
         try {
 
-            const resposta = await fetch(
-                `http://localhost:3000/alunos/${id}`,
-                {
-                    method: 'DELETE'
-                }
-            );
+            const resposta =
+                await fetch(
+                    `http://localhost:3000/alunos/${id}`,
+                    {
+                        method: 'DELETE'
+                    }
+                );
+
+
+            const textoResposta =
+                await resposta.text();
 
 
             if (!resposta.ok) {
 
                 throw new Error(
+                    textoResposta ||
                     'Erro ao excluir aluno'
                 );
 
@@ -364,6 +504,7 @@ function Alunos() {
             console.error(erro);
 
             setMensagem(
+                erro.message ||
                 'Erro ao excluir o aluno.'
             );
 
@@ -375,6 +516,10 @@ function Alunos() {
     return (
 
         <Box>
+
+            {/* =====================================
+                TÍTULO
+            ====================================== */}
 
             <Typography
                 variant="h4"
@@ -403,12 +548,15 @@ function Alunos() {
 
                 <Alert
                     severity={
-                        mensagem.includes('sucesso')
+                        mensagem.includes(
+                            'sucesso'
+                        )
                             ? 'success'
                             : 'error'
                     }
                     sx={{
-                        mb: 3
+                        mb: 3,
+                        whiteSpace: 'pre-wrap'
                     }}
                 >
                     {mensagem}
@@ -451,10 +599,12 @@ function Alunos() {
                             spacing={2}
                         >
 
+                            {/* NOME */}
+
                             <Grid
                                 item
                                 xs={12}
-                                md={5}
+                                md={4}
                             >
 
                                 <TextField
@@ -470,6 +620,8 @@ function Alunos() {
 
                             </Grid>
 
+
+                            {/* EMAIL */}
 
                             <Grid
                                 item
@@ -492,10 +644,12 @@ function Alunos() {
                             </Grid>
 
 
+                            {/* DATA */}
+
                             <Grid
                                 item
                                 xs={12}
-                                md={3}
+                                md={2}
                             >
 
                                 <TextField
@@ -519,6 +673,58 @@ function Alunos() {
 
                             </Grid>
 
+
+                            {/* TURMA */}
+
+                            <Grid
+                                item
+                                xs={12}
+                                md={2}
+                            >
+
+                                <TextField
+                                    select
+                                    fullWidth
+                                    label="Turma"
+                                    value={fkTurma}
+                                    onChange={(event) =>
+                                        setFkTurma(
+                                            event.target.value
+                                        )
+                                    }
+                                >
+
+                                    <MenuItem value="">
+                                        Sem turma
+                                    </MenuItem>
+
+
+                                    {turmas.map(
+                                        (turma) => (
+
+                                            <MenuItem
+                                                key={
+                                                    turma.id
+                                                }
+                                                value={
+                                                    turma.id
+                                                }
+                                            >
+                                                {turma.nome ||
+                                                    turma.descricao ||
+                                                    turma.turma ||
+                                                    `Turma ${turma.id}`}
+                                            </MenuItem>
+
+                                        )
+                                    )}
+
+                                </TextField>
+
+                            </Grid>
+
+
+                            {/* BOTÕES */}
 
                             <Grid
                                 item
@@ -563,7 +769,7 @@ function Alunos() {
 
 
             {/* =====================================
-                LISTA DE ALUNOS
+                LISTA
             ====================================== */}
 
             <Typography
@@ -597,11 +803,21 @@ function Alunos() {
                             </TableCell>
 
                             <TableCell>
-                                <strong>Data de Nascimento</strong>
+                                <strong>
+                                    Data de Nascimento
+                                </strong>
                             </TableCell>
 
                             <TableCell>
-                                <strong>Ações</strong>
+                                <strong>
+                                    Turma
+                                </strong>
+                            </TableCell>
+
+                            <TableCell>
+                                <strong>
+                                    Ações
+                                </strong>
                             </TableCell>
 
                         </TableRow>
@@ -616,7 +832,7 @@ function Alunos() {
                             <TableRow>
 
                                 <TableCell
-                                    colSpan={5}
+                                    colSpan={6}
                                     align="center"
                                 >
                                     Nenhum aluno cadastrado.
@@ -626,66 +842,76 @@ function Alunos() {
 
                         ) : (
 
-                            alunos.map((aluno) => (
+                            alunos.map(
+                                (aluno) => (
 
-                                <TableRow
-                                    key={aluno.id}
-                                >
+                                    <TableRow
+                                        key={
+                                            aluno.id
+                                        }
+                                    >
 
-                                    <TableCell>
-                                        {aluno.id}
-                                    </TableCell>
+                                        <TableCell>
+                                            {aluno.id}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        {aluno.nome}
-                                    </TableCell>
+                                        <TableCell>
+                                            {aluno.nome}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        {aluno.email}
-                                    </TableCell>
+                                        <TableCell>
+                                            {aluno.email}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        {formatarData(
-                                            aluno.data_nascimento
-                                        )}
-                                    </TableCell>
+                                        <TableCell>
+                                            {formatarData(
+                                                aluno.data_nascimento
+                                            )}
+                                        </TableCell>
 
-                                    <TableCell>
+                                        <TableCell>
+                                            {nomeDaTurma(
+                                                aluno
+                                            )}
+                                        </TableCell>
 
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                                mr: 1
-                                            }}
-                                            onClick={() =>
-                                                editarAluno(
-                                                    aluno
-                                                )
-                                            }
-                                        >
-                                            Editar
-                                        </Button>
+                                        <TableCell>
+
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{
+                                                    mr: 1
+                                                }}
+                                                onClick={() =>
+                                                    editarAluno(
+                                                        aluno
+                                                    )
+                                                }
+                                            >
+                                                Editar
+                                            </Button>
 
 
-                                        <Button
-                                            size="small"
-                                            color="error"
-                                            variant="outlined"
-                                            onClick={() =>
-                                                excluirAluno(
-                                                    aluno.id
-                                                )
-                                            }
-                                        >
-                                            Excluir
-                                        </Button>
+                                            <Button
+                                                size="small"
+                                                color="error"
+                                                variant="outlined"
+                                                onClick={() =>
+                                                    excluirAluno(
+                                                        aluno.id
+                                                    )
+                                                }
+                                            >
+                                                Excluir
+                                            </Button>
 
-                                    </TableCell>
+                                        </TableCell>
 
-                                </TableRow>
+                                    </TableRow>
 
-                            ))
+                                )
+                            )
 
                         )}
 

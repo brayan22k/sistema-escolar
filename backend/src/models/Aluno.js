@@ -55,4 +55,4 @@ Aluno.init(
     }
 );
 
-export default Aluno; 
+export default Aluno;

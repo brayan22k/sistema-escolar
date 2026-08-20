@@ -1,21 +1,26 @@
 import express from 'express';
 import cors from 'cors';
-
 import sequelize from './config/database.js';
-
 
 // ======================================================
 // ROTAS
 // ======================================================
 
-import alunoRoutes from './routes/alunos/routes.js';
+import alunosRoutes from './routes/alunos/routes.js';
+import disciplinaRoutes from './routes/disciplina/routes.js';
+import notasRoutes from './routes/Notas/routes.js';
+import professoresRoutes from './routes/professores/routes.js';
+import turmasRoutes from './routes/turmas/routes.js';
 
-import turmaRoutes from './routes/turmas/routes.js';
+// ======================================================
+// MODELS
+// ======================================================
 
-import professorRoutes from './routes/professores/routes.js';
-
-import notaRoutes from './routes/notas/routes.js';
-
+import './models/Aluno.js';
+import './models/Disciplina.js';
+import './models/Nota.js';
+import './models/Professor.js';
+import './models/Turma.js';
 
 // ======================================================
 // APP
@@ -23,96 +28,76 @@ import notaRoutes from './routes/notas/routes.js';
 
 const app = express();
 
-const PORT = 3000;
-
-
 // ======================================================
 // MIDDLEWARES
 // ======================================================
 
 app.use(cors());
-
 app.use(express.json());
-
-app.use(express.urlencoded({
-    extended: true
-}));
-
 
 // ======================================================
 // ROTA PRINCIPAL
 // ======================================================
 
 app.get('/', (req, res) => {
-
-    res.status(200).send(
-        'API do Sistema Escolar funcionando!'
-    );
-
+    res.json({
+        mensagem: 'API do Sistema Escolar funcionando!'
+    });
 });
 
-
 // ======================================================
-// ROTAS DOS ALUNOS
-// ======================================================
-
-app.use('/', alunoRoutes);
-
-
-// ======================================================
-// ROTAS DAS TURMAS
+// ROTAS DA API
 // ======================================================
 
-app.use('/', turmaRoutes);
+app.use('/alunos', alunosRoutes);
 
+app.use('/disciplinas', disciplinaRoutes);
 
-// ======================================================
-// ROTAS DOS PROFESSORES
-// ======================================================
+app.use('/notas', notasRoutes);
 
-app.use('/', professorRoutes);
+app.use('/professores', professoresRoutes);
 
-
-// ======================================================
-// ROTAS DAS NOTAS
-// ======================================================
-
-app.use('/', notaRoutes);
-
+app.use('/turmas', turmasRoutes);
 
 // ======================================================
-// INICIAR SERVIDOR
+// TRATAMENTO DE ERRO 404
+// ======================================================
+
+app.use((req, res) => {
+    res.status(404).json({
+        erro: 'Rota não encontrada',
+        rota: req.originalUrl
+    });
+});
+
+// ======================================================
+// PORTA
+// ======================================================
+
+const PORT = process.env.PORT || 3000;
+
+// ======================================================
+// CONEXÃO COM BANCO E INICIALIZAÇÃO
 // ======================================================
 
 async function iniciarServidor() {
-
     try {
-
         await sequelize.authenticate();
 
-        console.log(
-            'Banco de dados conectado com sucesso!'
-        );
+        console.log('Banco de dados conectado com sucesso!');
 
+        await sequelize.sync();
+
+        console.log('Banco de dados sincronizado com sucesso!');
 
         app.listen(PORT, () => {
-
-            console.log(
-                `Servidor rodando em http://localhost:${PORT}`
-            );
-
+            console.log(`Servidor rodando em http://localhost:${PORT}`);
         });
 
     } catch (erro) {
-
-        console.error(
-            'Erro ao conectar ao banco de dados:',
-            erro
-        );
-
+        console.error('Erro ao conectar/iniciar o servidor:');
+        console.error(erro);
     }
-
 }
-
 
 iniciarServidor();

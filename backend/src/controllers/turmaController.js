@@ -108,11 +108,46 @@ async function listarAlunosDaTurma(req, res) {
   }
 }
 
+async function desvincularAluno(req, res) {
+  const turmaId = Number(req.params.id);
+  const alunoId = Number(req.params.alunoId);
+
+  if (!Number.isInteger(turmaId) || !Number.isInteger(alunoId)) {
+    return res.status(400).json({ erro: 'Informe IDs válidos para a turma e o aluno.' });
+  }
+
+  try {
+    const [turma, aluno] = await Promise.all([
+      Turma.findByPk(turmaId),
+      Aluno.findByPk(alunoId),
+    ]);
+
+    if (!turma || !aluno) {
+      return res.status(404).json({ erro: 'Turma ou aluno não encontrado.' });
+    }
+
+    if (aluno.turma_id !== turma.id) {
+      return res.status(400).json({ erro: 'Este aluno não está vinculado a esta turma.' });
+    }
+
+    await aluno.update({ turma_id: null });
+
+    const turmaAtualizada = await Turma.findByPk(turma.id, {
+      include: [{ model: Aluno, as: 'alunos', attributes: ['id', 'nome', 'email', 'serie'] }],
+    });
+
+    res.status(200).json(turmaAtualizada);
+  } catch (erro) {
+    res.status(400).json({ erro: `Erro ao desvincular aluno: ${erro.message}` });
+  }
+}
+
 export default {
   listarTurmas,
   cadastrarTurma,
   editarTurma,
   excluirTurma,
   vincularAluno,
+  desvincularAluno,
   listarAlunosDaTurma,
 };

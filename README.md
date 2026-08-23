@@ -1,22 +1,22 @@
 # Persistema - Sistema Escolar
 
 Sistema didático desenvolvido pelos alunos do 3º ano de Desenvolvimento de
-Sistemas. A Missão 002 implementa a organização dos alunos em turmas.
+Sistemas. A Missão 003 introduz o boletim digital com lançamento e consulta de
+notas.
 
 O histórico de decisões e o estado entre conversas ficam em
 [CONTEXTO.md](CONTEXTO.md).
 
-## Missão 002 entregue
+## Missão 003 entregue
 
 O sistema permite:
 
-- cadastrar turmas com nome, série e ano letivo;
-- listar as turmas cadastradas;
-- vincular alunos a uma turma;
-- consultar os alunos pertencentes a cada turma;
-- pesquisar alunos e turmas por uma busca global em cada lista;
-- editar e excluir alunos e turmas;
-- manter o cadastro de alunos da Missão 001.
+- cadastrar alunos, turmas e vincular alunos a uma turma;
+- lançar notas por aluno, disciplina e bimestre;
+- listar as notas cadastradas em uma tabela centralizada;
+- consultar o desempenho por disciplina e situação da nota;
+- calcular uma média geral e exibir um resumo do boletim;
+- manter a base da Missão 001 e 002 funcionando no mesmo painel.
 
 ## Como executar
 
@@ -28,24 +28,9 @@ npm install
 npm run dev
 ```
 
-O backend usa as configurações do arquivo `backend/.env` para conectar ao
-MySQL. O modelo é sincronizado quando o servidor inicia; `DB_SYNC_ALTER=true`
-atualiza a estrutura existente para incluir o relacionamento da Missão 002.
-
-### Dados fictícios para teste
-
-Depois que o backend criar as tabelas, carregue os dados de teste com:
-
-```bash
-mysql -u root sistema_escolar < backend/sql/seed-missao-002.sql
-```
-
-O script cria três turmas e seis alunos vinculados. Ele pode ser executado mais
-de uma vez sem duplicar os alunos pelos e-mails de teste.
-
-Para preservar os dados carregados, use `DB_SYNC_FORCE=false` no `backend/.env`.
-Com `DB_SYNC_FORCE=true`, o Sequelize apaga e recria as tabelas ao iniciar o
-servidor.
+O backend usa as configurações do arquivo `backend/.env` e sincroniza os modelos
+quando o servidor inicia. `DB_SYNC_ALTER=true` mantém os registros existentes ao
+atualizar a estrutura do banco.
 
 ### Frontend
 
@@ -57,27 +42,25 @@ npm run dev
 
 Acesse `http://localhost:5173`.
 
-## Endpoints da Missão 002
+## Endpoints da Missão 003
 
 | Método | Endpoint | Finalidade |
 | --- | --- | --- |
-| `GET` | `/turmas` | Lista turmas com seus alunos |
-| `POST` | `/turmas` | Cadastra uma turma |
-| `PUT` | `/turmas/:id` | Edita uma turma |
-| `DELETE` | `/turmas/:id` | Exclui uma turma e desassocia seus alunos |
-| `POST` | `/turmas/:id/alunos` | Vincula um aluno à turma |
-| `GET` | `/turmas/:id/alunos` | Consulta os alunos da turma |
+| `GET` | `/notas` | Lista as notas cadastradas |
+| `POST` | `/notas` | Cadastra uma nova nota |
+| `DELETE` | `/notas/:id` | Exclui uma nota |
 
-O módulo de alunos possui os mesmos endpoints de cadastro, edição e exclusão
-em `/alunos`.
+O módulo de alunos e turmas continua com seus endpoints anteriores em `/alunos`
+ e `/turmas`.
 
 Exemplo de cadastro:
 
 ```json
 {
-  "nome": "3º DS",
-  "serie": "3º Ano",
-  "ano": 2026
+  "aluno_id": 1,
+  "disciplina": "Matemática",
+  "bimestre": "1º Bimestre",
+  "nota": 8.5
 }
 ```
 
@@ -85,140 +68,56 @@ Exemplo de cadastro:
 
 - `backend/src/models/Aluno.js`: modelo de aluno com `turma_id` opcional.
 - `backend/src/models/Turma.js`: modelo de turma.
-- `backend/src/controllers/turmaController.js`: regras da Missão 002.
-- `backend/src/routes/turmas/routes.js`: rotas de turmas.
-- `frontend/src/App.jsx`: cadastro de alunos e gestão de turmas.
+- `backend/src/models/Nota.js`: modelo de notas do boletim.
+- `backend/src/controllers/notaController.js`: regras de cadastro e consulta de notas.
+- `backend/src/routes/boletim/routes.js`: rotas da Missão 003.
+- `frontend/src/App.jsx`: painel com módulos de alunos, turmas e boletim.
 
 Cada módulo do backend mantém suas rotas, controller e model separados. O
 arquivo `backend/src/routes/index.js` apenas registra os módulos existentes.
 
 ## Padrão dos relatórios
 
-As listas de registros são apresentadas com a tabela do Material UI. Todo novo
-relatório deve seguir o mesmo padrão: busca global no conjunto de registros,
-colunas objetivas e ações de editar e excluir quando aplicáveis.
+As listas de registros são apresentadas com tabela do Material UI. A tela de
+boletim segue o mesmo padrão: busca global, colunas objetivas e ações rápidas.
 
 ## Validações realizadas
 
 - Build do frontend executado com sucesso.
 - Sintaxe dos arquivos JavaScript do backend validada com `node --check`.
-- O fluxo contra o MySQL depende das credenciais configuradas em
-  `backend/.env`.
+- O fluxo contra o MySQL depende das credenciais configuradas em `backend/.env`.
 
 ## Próxima etapa
 
-Este repositório contém somente as entregas das Missões 001 e 002. A próxima
-missão será definida em aula e não foi antecipada neste código.
-# Persistema - Guia Pedagogico da Missao 002
+A próxima missão pode ampliar o boletim com média por disciplina, ranking de
+alunos, dashboard do diretor e mini boletim individual.
 
-> Este guia será revisado ao final de cada missão para orientar a próxima etapa
-> do projeto. O histórico de decisões e o estado entre conversas ficam em
-> [CONTEXTO.md](CONTEXTO.md).
+## Guia pedagógico da Missão 003
 
-Este README foi criado para orientar a turma do 3o ano (DS) na Missao 002 sem quebrar o que ja foi entregue na Missao 001.
+Objetivo da Missão 003:
+- lançar notas do aluno;
+- registrar disciplina, bimestre e nota;
+- consultar notas e médias;
+- preparar o sistema para boletim digital.
 
-Objetivo da Missao 002:
-- Cadastrar turmas
-- Relacionar alunos as turmas
-- Consultar alunos por turma
+### Modelagem sugerida
 
-Importante:
-- A modularizacao atual esta pronta para receber novos modulos.
-- Usem este guia como roteiro de trabalho do squad.
+- `notas`: id, aluno_id, disciplina, bimestre, nota.
+- Relacionamento: `Aluno` possui muitas `Notas`.
 
-## 1) Como o sistema esta modularizado hoje
+### Checklist de QA
 
-Backend:
-- Entrada do servidor: backend/src/server.js
-- Configuracao de banco: backend/src/config/database.js
-- Roteador central: backend/src/routes/index.js
-- Modulo alunos (Missao 001):
-  - Rotas: backend/src/routes/alunos/routes.js
-  - Controller: backend/src/controllers/alunoController.js
-  - Model: backend/src/models/Aluno.js
+- cadastro com aluno, disciplina, bimestre e nota preenchidos;
+- nota salva com valor válido entre 0 e 10;
+- lista exibe os registros corretamente;
+- média geral calculada sem erros visíveis;
+- sistema continua funcionando com as missões anteriores.
 
-Frontend:
-- Entrada React: frontend/src/main.jsx
-- Tela principal atual: frontend/src/App.jsx
-- Estilos globais: frontend/src/styles.css
+### Boss Challenge
 
-Regra de ouro de modularizacao:
-- Cada novo modulo deve ter sua propria pasta de rotas e seu proprio controller.
-- O arquivo backend/src/routes/index.js deve apenas "plugar" os modulos.
-
-## 2) Arquivos que cada papel deve alterar na Missao 002
-
-### Front-End
-Arquivos principais:
-- frontend/src/App.jsx
-
-O que alterar:
-- Criar interface para cadastro de turma (nome, serie, ano).
-- Exibir lista de turmas cadastradas.
-- Nao misturar regra de alunos com regra de turmas no mesmo bloco sem separacao.
-
-Boa pratica didatica:
-- Separar em funcoes/trechos claros:
-  - estado de turma
-  - formulario de turma
-  - lista de turmas
-
-### Back-End
-Arquivos a criar/alterar:
-- Criar: backend/src/routes/turmas/routes.js
-- Criar: backend/src/controllers/turmaController.js
-- Alterar: backend/src/routes/index.js
-
-O que fazer:
-- Criar rotas de turmas em modulo separado.
-- Criar controller de turmas em arquivo separado.
-- Registrar o novo modulo no roteador central.
-
-Exemplo de rotas esperadas (sugestao):
-- GET /turmas
-- POST /turmas
-- POST /turmas/:id/alunos
-
-### Banco de Dados
-Arquivos base:
-- backend/src/models/Aluno.js (ja existe)
-
-O que projetar na Missao 002:
-- Nova entidade TURMA (id, nome, serie, ano)
-- Relacao 1:N (1 turma para muitos alunos)
-
-Primeiro em papel/diagrama:
-- Entidade TURMA
-- Chave estrangeira em ALUNOS (ex: turma_id)
-
-Depois no codigo (fase de implementacao):
-- Criar model Turma
-- Definir associacoes no Sequelize
-
-### QA
-Checklist minimo:
-- Cadastro de turma com campos obrigatorios
-- Turma salva corretamente
-- Vinculo aluno -> turma funcionando
-- Consulta de turma com seus alunos
-- Nao quebrou cadastro de alunos da Missao 001
-
-## 3) Ordem recomendada de execucao (Sprint)
-
-1. Scrum Master distribui tarefas por papel.
-2. Banco faz modelagem no papel (1:N).
-3. Back cria modulo de turmas (rotas + controller).
-4. Front monta formulario/lista de turmas.
-5. QA valida fluxo completo.
-6. Squad prepara demo final.
-
-## 4) Contrato entre Front e Back (combinado do squad)
-
-Padrao de request para criar turma:
-
-{
-  "nome": "3o DS",
-  "serie": "3o Ano",
+- calcular média do aluno;
+- classificar aprovação, recuperação ou reprovação;
+- mostrar resumo geral do boletim.  "serie": "3o Ano",
   "ano": "2026"
 }
 

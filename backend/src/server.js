@@ -3,6 +3,8 @@ import cors from 'cors';
 import sequelize from './config/database.js';
 import Aluno from './models/Aluno.js';
 import Turma from './models/Turma.js';
+import Disciplina from './models/Disciplina.js';
+import Nota from './models/Nota.js';
 import routes from './routes/index.js';
 
 const app = express();
@@ -13,6 +15,10 @@ const DB_SYNC_ALTER = String(process.env.DB_SYNC_ALTER || 'true').toLowerCase() 
 
 Turma.hasMany(Aluno, { foreignKey: 'turma_id', as: 'alunos' });
 Aluno.belongsTo(Turma, { foreignKey: 'turma_id', as: 'turma' });
+Turma.hasMany(Disciplina, { foreignKey: 'turma_id', as: 'disciplinas' });
+Disciplina.belongsTo(Turma, { foreignKey: 'turma_id', as: 'turma' });
+Aluno.hasMany(Nota, { foreignKey: 'aluno_id', as: 'notas' });
+Nota.belongsTo(Aluno, { foreignKey: 'aluno_id', as: 'aluno' });
 
 // Middlewares
 app.use(cors());

@@ -8,6 +8,7 @@ routes.post('/turmas', turmaController.cadastrarTurma);
 routes.put('/turmas/:id', turmaController.editarTurma);
 routes.delete('/turmas/:id', turmaController.excluirTurma);
 routes.post('/turmas/:id/alunos', turmaController.vincularAluno);
+routes.delete('/turmas/:id/alunos/:alunoId', turmaController.desvincularAluno);
 routes.get('/turmas/:id/alunos', turmaController.listarAlunosDaTurma);
 
 export default routes;

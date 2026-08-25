@@ -58,10 +58,9 @@ const formularioInicial = {
 
 
 // ======================================================
-// FUNÇÕES DE APOIO (Boss Challenge)
+// FUNÇÕES DE APOIO
 // ======================================================
 
-// Nível 1 — média simples de uma lista de notas
 function calcularMedia(valores) {
 
     if (!valores || valores.length === 0) {
@@ -69,36 +68,53 @@ function calcularMedia(valores) {
     }
 
     const soma = valores.reduce(
-        (acumulado, valor) => acumulado + Number(valor),
+        (acumulado, valor) =>
+            acumulado + Number(valor),
         0
     );
 
     return soma / valores.length;
-
 }
 
 
-// Nível 2 — situação do aluno a partir da média
+// ======================================================
+// SITUAÇÃO
+// ======================================================
+
 function situacaoDaMedia(media) {
 
     if (media === null) {
-        return { texto: 'Sem notas', cor: 'default' };
+        return {
+            texto: 'Sem notas',
+            cor: 'default'
+        };
     }
 
     if (media >= 6) {
-        return { texto: 'Aprovado', cor: 'success' };
+        return {
+            texto: 'Aprovado',
+            cor: 'success'
+        };
     }
 
     if (media >= 4) {
-        return { texto: 'Recuperação', cor: 'warning' };
+        return {
+            texto: 'Recuperação',
+            cor: 'warning'
+        };
     }
 
-    return { texto: 'Reprovado', cor: 'error' };
-
+    return {
+        texto: 'Reprovado',
+        cor: 'error'
+    };
 }
 
 
-// Agrupa as notas de um aluno por disciplina e tira a média de cada uma
+// ======================================================
+// MÉDIA POR DISCIPLINA
+// ======================================================
+
 function mediaPorDisciplina(notas) {
 
     const grupos = {};
@@ -109,7 +125,9 @@ function mediaPorDisciplina(notas) {
             grupos[nota.disciplina] = [];
         }
 
-        grupos[nota.disciplina].push(nota.nota);
+        grupos[nota.disciplina].push(
+            nota.nota
+        );
 
     });
 
@@ -119,7 +137,6 @@ function mediaPorDisciplina(notas) {
             media: calcularMedia(valores)
         })
     );
-
 }
 
 
@@ -144,7 +161,7 @@ function Notas() {
 
 
     // ==================================================
-    // CONSULTA / BOLETIM DO ALUNO
+    // CONSULTA / BOLETIM
     // ==================================================
 
     const [alunoConsultaId, setAlunoConsultaId] =
@@ -158,7 +175,7 @@ function Notas() {
 
 
     // ==================================================
-    // CARREGAR NOTAS (vem do Back-End, não é array fixo)
+    // CARREGAR NOTAS
     // ==================================================
 
     async function carregarNotas() {
@@ -197,7 +214,7 @@ function Notas() {
 
 
     // ==================================================
-    // CARREGAR ALUNOS (para o Select)
+    // CARREGAR ALUNOS
     // ==================================================
 
     async function carregarAlunos() {
@@ -336,7 +353,9 @@ function Notas() {
         }
 
 
-        const notaNumerica = Number(form.nota);
+        const notaNumerica =
+            Number(form.nota);
+
 
         if (
             Number.isNaN(notaNumerica) ||
@@ -402,23 +421,28 @@ function Notas() {
                 'success'
             );
 
+
             setForm(
                 (formularioAnterior) => ({
                     ...formularioInicial,
-                    aluno_id: formularioAnterior.aluno_id
+                    aluno_id:
+                        formularioAnterior.aluno_id
                 })
             );
 
+
             await carregarNotas();
 
-            // Se a nota cadastrada é do aluno que está sendo
-            // consultado no boletim, atualiza a consulta também.
+
             if (
                 alunoConsultaId &&
-                Number(alunoConsultaId) === Number(form.aluno_id)
+                Number(alunoConsultaId) ===
+                Number(form.aluno_id)
             ) {
 
-                await consultarAluno(alunoConsultaId);
+                await consultarAluno(
+                    alunoConsultaId
+                );
 
             }
 
@@ -438,7 +462,7 @@ function Notas() {
 
 
     // ==================================================
-    // CONSULTAR NOTAS DE UM ALUNO (GET /notas/aluno/:id)
+    // CONSULTAR NOTAS DE UM ALUNO
     // ==================================================
 
     async function consultarAluno(alunoId) {
@@ -459,6 +483,7 @@ function Notas() {
                 `/api/notas/aluno/${alunoId}`
             );
 
+
             if (!resposta.ok) {
 
                 const erro =
@@ -471,12 +496,20 @@ function Notas() {
 
             }
 
+
             const dados =
                 await resposta.json();
 
-            setNotasConsulta(dados.notas);
 
-            setAlunoConsultaNome(dados.aluno.nome);
+            setNotasConsulta(
+                dados.notas
+            );
+
+
+            setAlunoConsultaNome(
+                dados.aluno.nome
+            );
+
 
         } catch (erro) {
 
@@ -494,9 +527,14 @@ function Notas() {
     }
 
 
+    // ==================================================
+    // ALTERAR ALUNO DA CONSULTA
+    // ==================================================
+
     function alterarAlunoConsulta(event) {
 
-        const novoId = event.target.value;
+        const novoId =
+            event.target.value;
 
         setAlunoConsultaId(novoId);
 
@@ -506,55 +544,109 @@ function Notas() {
 
 
     // ==================================================
-    // NOME DO ALUNO A PARTIR DO ID
+    // NOME DO ALUNO
     // ==================================================
 
     function nomeDoAluno(alunoId) {
 
         const aluno = alunos.find(
-            (item) => item.id === alunoId
+            (item) =>
+                item.id === alunoId
         );
 
-        return aluno ? aluno.nome : '—';
+        return aluno
+            ? aluno.nome
+            : '—';
 
     }
 
 
     // ==================================================
-    // BOSS CHALLENGE — NÍVEL 3
-    // MAIOR NOTA / MENOR NOTA / MÉDIA DA TURMA
+    // ESTATÍSTICAS DA TURMA
     // ==================================================
 
     const valoresDeTodasAsNotas =
-        notas.map((item) => Number(item.nota));
+        notas.map(
+            (item) => Number(item.nota)
+        );
+
 
     const maiorNota =
         valoresDeTodasAsNotas.length
-            ? Math.max(...valoresDeTodasAsNotas)
+            ? Math.max(
+                ...valoresDeTodasAsNotas
+            )
             : null;
+
 
     const menorNota =
         valoresDeTodasAsNotas.length
-            ? Math.min(...valoresDeTodasAsNotas)
+            ? Math.min(
+                ...valoresDeTodasAsNotas
+            )
             : null;
 
+
     const mediaDaTurma =
-        calcularMedia(valoresDeTodasAsNotas);
+        calcularMedia(
+            valoresDeTodasAsNotas
+        );
 
 
     // ==================================================
-    // BOLETIM DO ALUNO CONSULTADO (Níveis 1, 2 e 4)
+    // BOLETIM
     // ==================================================
 
-    const boletimPorDisciplina =
-        mediaPorDisciplina(notasConsulta);
+    const mediaGeralAluno =
+        calcularMedia(
+            notasConsulta.map(
+                (item) => item.nota
+            )
+        );
 
-    const mediaGeralAluno = calcularMedia(
-        notasConsulta.map((item) => item.nota)
-    );
 
     const situacaoAluno =
-        situacaoDaMedia(mediaGeralAluno);
+        situacaoDaMedia(
+            mediaGeralAluno
+        );
+
+
+    // ==================================================
+    // ORGANIZAR NOTAS POR BIMESTRE
+    // ==================================================
+
+    function notasDoBimestre(
+        bimestre
+    ) {
+
+        return notasConsulta.filter(
+            (nota) =>
+                nota.bimestre === bimestre
+        );
+
+    }
+
+
+    // ==================================================
+    // MÉDIA DO BIMESTRE
+    // ==================================================
+
+    function mediaDoBimestre(
+        bimestre
+    ) {
+
+        const notasBimestre =
+            notasDoBimestre(
+                bimestre
+            );
+
+        return calcularMedia(
+            notasBimestre.map(
+                (item) => item.nota
+            )
+        );
+
+    }
 
 
     // ==================================================
@@ -603,14 +695,10 @@ function Notas() {
 
 
             {/* ==========================================
-                CADASTRO DE NOTAS
+                CADASTRO
             ========================================== */}
 
-            <Card
-                sx={{
-                    mb: 4
-                }}
-            >
+            <Card sx={{ mb: 4 }}>
 
                 <CardContent>
 
@@ -632,8 +720,6 @@ function Notas() {
                             container
                             spacing={2}
                         >
-
-                            {/* ALUNO */}
 
                             <Grid
                                 item
@@ -688,8 +774,6 @@ function Notas() {
                             </Grid>
 
 
-                            {/* DISCIPLINA */}
-
                             <Grid
                                 item
                                 xs={12}
@@ -731,8 +815,6 @@ function Notas() {
 
                             </Grid>
 
-
-                            {/* BIMESTRE */}
 
                             <Grid
                                 item
@@ -776,8 +858,6 @@ function Notas() {
                             </Grid>
 
 
-                            {/* NOTA */}
-
                             <Grid
                                 item
                                 xs={12}
@@ -814,8 +894,6 @@ function Notas() {
 
                         </Grid>
 
-
-                        {/* BOTÕES */}
 
                         <Stack
                             direction="row"
@@ -858,8 +936,7 @@ function Notas() {
 
 
             {/* ==========================================
-                BOSS CHALLENGE — NÍVEL 3
-                MAIOR / MENOR / MÉDIA DA TURMA
+                ESTATÍSTICAS
             ========================================== */}
 
             <Grid
@@ -868,53 +945,121 @@ function Notas() {
                 sx={{ mb: 4 }}
             >
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                    item
+                    xs={12}
+                    md={4}
+                >
+
                     <Paper
                         variant="outlined"
-                        sx={{ p: 2.5, borderRadius: 3, textAlign: 'center' }}
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 3,
+                            textAlign: 'center'
+                        }}
                     >
-                        <Typography color="text.secondary" variant="body2">
+
+                        <Typography
+                            color="text.secondary"
+                            variant="body2"
+                        >
                             Maior Nota
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="success.main">
-                            {maiorNota !== null ? maiorNota.toFixed(1) : '—'}
+
+                        <Typography
+                            variant="h4"
+                            fontWeight="bold"
+                            color="success.main"
+                        >
+                            {maiorNota !== null
+                                ? maiorNota.toFixed(1)
+                                : '—'}
                         </Typography>
+
                     </Paper>
+
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+
+                <Grid
+                    item
+                    xs={12}
+                    md={4}
+                >
+
                     <Paper
                         variant="outlined"
-                        sx={{ p: 2.5, borderRadius: 3, textAlign: 'center' }}
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 3,
+                            textAlign: 'center'
+                        }}
                     >
-                        <Typography color="text.secondary" variant="body2">
+
+                        <Typography
+                            color="text.secondary"
+                            variant="body2"
+                        >
                             Menor Nota
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="error.main">
-                            {menorNota !== null ? menorNota.toFixed(1) : '—'}
+
+                        <Typography
+                            variant="h4"
+                            fontWeight="bold"
+                            color="error.main"
+                        >
+                            {menorNota !== null
+                                ? menorNota.toFixed(1)
+                                : '—'}
                         </Typography>
+
                     </Paper>
+
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+
+                <Grid
+                    item
+                    xs={12}
+                    md={4}
+                >
+
                     <Paper
                         variant="outlined"
-                        sx={{ p: 2.5, borderRadius: 3, textAlign: 'center' }}
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 3,
+                            textAlign: 'center'
+                        }}
                     >
-                        <Typography color="text.secondary" variant="body2">
+
+                        <Typography
+                            color="text.secondary"
+                            variant="body2"
+                        >
                             Média da Turma
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="primary.main">
-                            {mediaDaTurma !== null ? mediaDaTurma.toFixed(2) : '—'}
+
+                        <Typography
+                            variant="h4"
+                            fontWeight="bold"
+                            color="primary.main"
+                        >
+                            {mediaDaTurma !== null
+                                ? mediaDaTurma.toFixed(2)
+                                : '—'}
                         </Typography>
+
                     </Paper>
+
                 </Grid>
 
             </Grid>
 
 
             {/* ==========================================
-                LISTAGEM GERAL DE NOTAS
+                LISTAGEM GERAL
             ========================================== */}
 
             <Card sx={{ mb: 4 }}>
@@ -941,10 +1086,21 @@ function Notas() {
 
                                 <TableRow>
 
-                                    <TableCell><strong>Aluno</strong></TableCell>
-                                    <TableCell><strong>Disciplina</strong></TableCell>
-                                    <TableCell><strong>Bimestre</strong></TableCell>
-                                    <TableCell><strong>Nota</strong></TableCell>
+                                    <TableCell>
+                                        <strong>Aluno</strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>Disciplina</strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>Bimestre</strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>Nota</strong>
+                                    </TableCell>
 
                                 </TableRow>
 
@@ -953,34 +1109,40 @@ function Notas() {
 
                             <TableBody>
 
-                                {notas.map((item) => (
+                                {notas.map(
+                                    (item) => (
 
-                                    <TableRow
-                                        key={item.id}
-                                        hover
-                                    >
+                                        <TableRow
+                                            key={item.id}
+                                            hover
+                                        >
 
-                                        <TableCell>
-                                            {item.aluno
-                                                ? item.aluno.nome
-                                                : nomeDoAluno(item.aluno_id)}
-                                        </TableCell>
+                                            <TableCell>
+                                                {item.aluno
+                                                    ? item.aluno.nome
+                                                    : nomeDoAluno(
+                                                        item.aluno_id
+                                                    )}
+                                            </TableCell>
 
-                                        <TableCell>
-                                            {item.disciplina}
-                                        </TableCell>
+                                            <TableCell>
+                                                {item.disciplina}
+                                            </TableCell>
 
-                                        <TableCell>
-                                            {item.bimestre}
-                                        </TableCell>
+                                            <TableCell>
+                                                {item.bimestre}
+                                            </TableCell>
 
-                                        <TableCell>
-                                            {Number(item.nota).toFixed(1)}
-                                        </TableCell>
+                                            <TableCell>
+                                                {Number(
+                                                    item.nota
+                                                ).toFixed(1)}
+                                            </TableCell>
 
-                                    </TableRow>
+                                        </TableRow>
 
-                                ))}
+                                    )
+                                )}
 
 
                                 {notas.length === 0 && (
@@ -994,7 +1156,9 @@ function Notas() {
 
                                             <Typography
                                                 color="text.secondary"
-                                                sx={{ py: 4 }}
+                                                sx={{
+                                                    py: 4
+                                                }}
                                             >
                                                 Nenhuma nota cadastrada ainda.
                                             </Typography>
@@ -1018,7 +1182,6 @@ function Notas() {
 
             {/* ==========================================
                 BOLETIM DO ALUNO
-                (Boss Challenge Níveis 1, 2 e 4)
             ========================================== */}
 
             <Card>
@@ -1033,18 +1196,26 @@ function Notas() {
                         Boletim do Aluno
                     </Typography>
 
+
                     <Typography
                         color="text.secondary"
                         sx={{ mb: 3 }}
                     >
-                        Selecione um aluno para ver a média por disciplina, a média geral e a situação.
+                        Selecione um aluno para ver as notas separadas por bimestre.
                     </Typography>
 
+
+                    {/* ==================================
+                        SELECIONAR ALUNO
+                    ================================== */}
 
                     <TextField
                         select
                         label="Aluno"
-                        sx={{ minWidth: 260, mb: 3 }}
+                        sx={{
+                            minWidth: 260,
+                            mb: 3
+                        }}
 
                         value={
                             alunoConsultaId
@@ -1058,6 +1229,7 @@ function Notas() {
                         <MenuItem value="">
                             Selecione...
                         </MenuItem>
+
 
                         {alunos.map(
                             (aluno) => (
@@ -1075,25 +1247,34 @@ function Notas() {
                     </TextField>
 
 
+                    {/* ==================================
+                        BOLETIM
+                    ================================== */}
+
                     {alunoConsultaId && (
 
                         <Paper
                             variant="outlined"
-                            sx={{ p: 3, borderRadius: 3 }}
+                            sx={{
+                                p: 3,
+                                borderRadius: 3
+                            }}
                         >
 
                             <Typography
                                 variant="subtitle1"
                                 fontWeight="bold"
-                                sx={{ mb: 1 }}
+                                sx={{ mb: 3 }}
                             >
                                 Aluno: {alunoConsultaNome}
                             </Typography>
 
 
-                            {boletimPorDisciplina.length === 0 ? (
+                            {notasConsulta.length === 0 ? (
 
-                                <Typography color="text.secondary">
+                                <Typography
+                                    color="text.secondary"
+                                >
                                     Este aluno ainda não tem notas lançadas.
                                 </Typography>
 
@@ -1101,51 +1282,184 @@ function Notas() {
 
                                 <>
 
-                                    <Stack spacing={0.5} sx={{ mb: 2 }}>
+                                    {/* ==================================
+                                        BIMESTRES
+                                    ================================== */}
 
-                                        {boletimPorDisciplina.map((item) => (
+                                    <Stack spacing={3}>
 
-                                            <Box
-                                                key={item.disciplina}
-                                                sx={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    borderBottom: '1px dotted #ddd',
-                                                    py: 0.5
-                                                }}
-                                            >
-                                                <Typography>{item.disciplina}</Typography>
-                                                <Typography fontWeight={600}>
-                                                    {item.media.toFixed(1)}
-                                                </Typography>
-                                            </Box>
+                                        {BIMESTRES.map(
+                                            (bimestre) => {
 
-                                        ))}
+                                                const notasBimestre =
+                                                    notasDoBimestre(
+                                                        bimestre
+                                                    );
+
+                                                const mediaBimestre =
+                                                    mediaDoBimestre(
+                                                        bimestre
+                                                    );
+
+
+                                                return (
+
+                                                    <Paper
+                                                        key={bimestre}
+                                                        variant="outlined"
+                                                        sx={{
+                                                            p: 2.5,
+                                                            borderRadius: 2
+                                                        }}
+                                                    >
+
+                                                        {/* TÍTULO */}
+
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                mb: 2
+                                                            }}
+                                                        >
+
+                                                            <Typography
+                                                                variant="h6"
+                                                                fontWeight="bold"
+                                                            >
+                                                                {bimestre}
+                                                            </Typography>
+
+
+                                                            {mediaBimestre !== null && (
+
+                                                                <Chip
+                                                                    label={`Média: ${mediaBimestre.toFixed(2)}`}
+                                                                    color={
+                                                                        mediaBimestre >= 6
+                                                                            ? 'success'
+                                                                            : mediaBimestre >= 4
+                                                                                ? 'warning'
+                                                                                : 'error'
+                                                                    }
+                                                                    sx={{
+                                                                        fontWeight: 'bold'
+                                                                    }}
+                                                                />
+
+                                                            )}
+
+                                                        </Box>
+
+
+                                                        {/* NOTAS */}
+
+                                                        {notasBimestre.length === 0 ? (
+
+                                                            <Typography
+                                                                color="text.secondary"
+                                                            >
+                                                                Nenhuma nota lançada neste bimestre.
+                                                            </Typography>
+
+                                                        ) : (
+
+                                                            <Stack
+                                                                spacing={0.5}
+                                                            >
+
+                                                                {mediaPorDisciplina(
+                                                                    notasBimestre
+                                                                ).map(
+                                                                    (item) => (
+
+                                                                        <Box
+                                                                            key={item.disciplina}
+                                                                            sx={{
+                                                                                display: 'flex',
+                                                                                justifyContent: 'space-between',
+                                                                                alignItems: 'center',
+                                                                                borderBottom: '1px dotted #777',
+                                                                                py: 0.8
+                                                                            }}
+                                                                        >
+
+                                                                            <Typography>
+                                                                                {item.disciplina}
+                                                                            </Typography>
+
+
+                                                                            <Typography
+                                                                                fontWeight={600}
+                                                                            >
+                                                                                {item.media.toFixed(1)}
+                                                                            </Typography>
+
+                                                                        </Box>
+
+                                                                    )
+                                                                )}
+
+                                                            </Stack>
+
+                                                        )}
+
+                                                    </Paper>
+
+                                                );
+
+                                            }
+                                        )}
 
                                     </Stack>
 
 
-                                    <Stack
-                                        direction="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
+                                    {/* ==================================
+                                        MÉDIA GERAL
+                                    ================================== */}
+
+                                    <Box
                                         sx={{
-                                            borderTop: '2px solid #333',
-                                            pt: 1.5
+                                            mt: 3,
+                                            pt: 2,
+                                            borderTop: '2px solid #333'
                                         }}
                                     >
 
-                                        <Typography variant="h6" fontWeight="bold">
-                                            Média Geral: {mediaGeralAluno.toFixed(2)}
-                                        </Typography>
+                                        <Stack
+                                            direction="row"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
 
-                                        <Chip
-                                            label={situacaoAluno.texto}
-                                            color={situacaoAluno.cor}
-                                            sx={{ fontWeight: 'bold' }}
-                                        />
+                                            <Typography
+                                                variant="h6"
+                                                fontWeight="bold"
+                                            >
+                                                Média Geral:{' '}
 
-                                    </Stack>
+                                                {mediaGeralAluno !== null
+                                                    ? mediaGeralAluno.toFixed(2)
+                                                    : '—'}
+                                            </Typography>
+
+
+                                            <Chip
+                                                label={
+                                                    situacaoAluno.texto
+                                                }
+                                                color={
+                                                    situacaoAluno.cor
+                                                }
+                                                sx={{
+                                                    fontWeight: 'bold'
+                                                }}
+                                            />
+
+                                        </Stack>
+
+                                    </Box>
 
                                 </>
 

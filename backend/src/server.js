@@ -1,51 +1,103 @@
 import express from 'express';
 import cors from 'cors';
 import sequelize from './config/database.js';
-import routes from './routes/index.js';
-import './models/associations.js';
+
+// ======================================================
+// ROTAS
+// ======================================================
+
+import alunosRoutes from './routes/alunos/routes.js';
+import disciplinaRoutes from './routes/disciplina/routes.js';
+import notasRoutes from './routes/Notas/routes.js';
+import professoresRoutes from './routes/professores/routes.js';
+import turmasRoutes from './routes/turmas/routes.js';
+
+// ======================================================
+// MODELS
+// ======================================================
+
+import './models/Aluno.js';
+import './models/Disciplina.js';
+import './models/Nota.js';
+import './models/Professor.js';
+import './models/Turma.js';
+
+// ======================================================
+// APP
+// ======================================================
 
 const app = express();
-const PORT = Number(process.env.PORT || 3000);
-const DB_RETRY_DELAY_MS = Number(process.env.DB_RETRY_DELAY_MS || 5000);
-const DB_SYNC_FORCE = String(process.env.DB_SYNC_FORCE || 'false').toLowerCase() === 'true';
 
-// Middlewares
+// ======================================================
+// MIDDLEWARES
+// ======================================================
+
 app.use(cors());
 app.use(express.json());
 
-// Rotas principais do sistema. Novos modulos entram no routes/index.js.
-app.use(routes);
+// ======================================================
+// ROTA PRINCIPAL
+// ======================================================
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Mantem o servidor HTTP no ar e tenta reconectar ao banco sem encerrar o processo.
-async function connectDatabaseWithRetry() {
-  while (true) {
-    try {
-      await sequelize.authenticate();
-      console.log('Conexao com o banco de dados estabelecida com sucesso!');
-
-      await sequelize.sync({ force: DB_SYNC_FORCE });
-      console.log('Banco de dados sincronizado com sucesso!');
-      return;
-    } catch (error) {
-      console.error('Falha ao conectar no banco. Nova tentativa em alguns segundos.');
-      console.error(error.message);
-      await delay(DB_RETRY_DELAY_MS);
-    }
-  }
-}
-
-async function startServer() {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
-
-  await connectDatabaseWithRetry();
-}
-
-startServer().catch((error) => {
-  console.error('Erro inesperado ao iniciar o servidor:', error);
+app.get('/', (req, res) => {
+    res.json({
+        mensagem: 'API do Sistema Escolar funcionando!'
+    });
 });
+
+// ======================================================
+// ROTAS DA API
+// ======================================================
+
+app.use('/alunos', alunosRoutes);
+
+app.use('/disciplinas', disciplinaRoutes);
+
+app.use('/notas', notasRoutes);
+
+app.use('/professores', professoresRoutes);
+
+app.use('/turmas', turmasRoutes);
+
+// ======================================================
+// TRATAMENTO DE ERRO 404
+// ======================================================
+
+app.use((req, res) => {
+    res.status(404).json({
+        erro: 'Rota não encontrada',
+        rota: req.originalUrl
+    });
+});
+
+// ======================================================
+// PORTA
+// ======================================================
+
+const PORT = process.env.PORT || 3000;
+
+// ======================================================
+// CONEXÃO COM BANCO E INICIALIZAÇÃO
+// ======================================================
+
+async function iniciarServidor() {
+    try {
+        await sequelize.authenticate();
+
+        console.log('Banco de dados conectado com sucesso!');
+
+        await sequelize.sync();
+
+        console.log('Banco de dados sincronizado com sucesso!');
+
+        app.listen(PORT, () => {
+            console.log(`Servidor rodando em http://localhost:${PORT}`);
+        });
+
+    } catch (erro) {
+        console.error('Erro ao conectar/iniciar o servidor:');
+        console.error(erro);
+    }
+}
+
+iniciarServidor();

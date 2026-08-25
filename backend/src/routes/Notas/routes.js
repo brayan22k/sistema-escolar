@@ -1,37 +1,35 @@
-// backend/src/routes/notas/routes.js
-
 import express from 'express';
 
-import notaController
-    from '../../controllers/notaController.js';
+import notaController from '../../controllers/notaController.js';
 
-
-const routes = express.Router();
+const router = express.Router();
 
 
 // ======================================================
-// NOTAS — MISSÃO 003
+// LISTAR TODAS AS NOTAS
+// GET /api/notas
 // ======================================================
 
-// LISTAR TODAS
-routes.get(
-    '/notas',
-    notaController.listarNotas
-);
+router.get('/', notaController.listarNotas);
 
 
-// CADASTRAR
-routes.post(
-    '/notas',
-    notaController.cadastrarNota
-);
+// ======================================================
+// CADASTRAR NOTA
+// POST /api/notas
+// ======================================================
+
+router.post('/', notaController.cadastrarNota);
 
 
-// CONSULTAR NOTAS DE UM ALUNO
-routes.get(
-    '/notas/aluno/:id',
+// ======================================================
+// LISTAR NOTAS DE UM ALUNO
+// GET /api/notas/aluno/:id
+// ======================================================
+
+router.get(
+    '/aluno/:id',
     notaController.listarNotasPorAluno
 );
 
 
-export default routes;
+export default router;

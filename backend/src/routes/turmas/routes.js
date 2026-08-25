@@ -1,40 +1,54 @@
 import express from 'express';
 
-import turmaController
-    from '../../controllers/turmaController.js';
+import {
+    listarTurmas,
+    cadastrarTurma,
+    buscarTurma,
+    editarTurma,
+    excluirTurma
+} from '../../controllers/turmaController.js';
+
+const router = express.Router();
 
 
-const routes = express.Router();
+// ======================================================
+// LISTAR TODAS AS TURMAS
+// GET /turmas
+// ======================================================
+
+router.get('/', listarTurmas);
 
 
-routes.get(
-    '/turmas',
-    turmaController.listarTurmas
-);
+// ======================================================
+// CADASTRAR TURMA
+// POST /turmas
+// ======================================================
+
+router.post('/', cadastrarTurma);
 
 
-routes.post(
-    '/turmas',
-    turmaController.cadastrarTurma
-);
+// ======================================================
+// BUSCAR TURMA POR ID
+// GET /turmas/:id
+// ======================================================
+
+router.get('/:id', buscarTurma);
 
 
-routes.get(
-    '/turmas/:id',
-    turmaController.buscarTurma
-);
+// ======================================================
+// EDITAR TURMA
+// PUT /turmas/:id
+// ======================================================
+
+router.put('/:id', editarTurma);
 
 
-routes.put(
-    '/turmas/:id',
-    turmaController.editarTurma
-);
+// ======================================================
+// EXCLUIR TURMA
+// DELETE /turmas/:id
+// ======================================================
+
+router.delete('/:id', excluirTurma);
 
 
-routes.delete(
-    '/turmas/:id',
-    turmaController.excluirTurma
-);
-
-
-export default routes;
+export default router;

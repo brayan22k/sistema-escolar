@@ -1,31 +1,29 @@
-// backend/src/models/Professor.js
-
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database.js';
 
-class Professor extends Model { }
+class Professor extends Model {}
 
 Professor.init(
     {
         nome: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(100),
             allowNull: false
         },
 
         email: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(150),
             allowNull: false,
             unique: true
         },
 
         disciplina: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(100),
             allowNull: false
         }
     },
     {
         sequelize,
-        modelName: 'professor',
+        modelName: 'Professor',
         tableName: 'professores',
         timestamps: false
     }

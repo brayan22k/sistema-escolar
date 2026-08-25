@@ -338,16 +338,10 @@ async function excluirTurma(req, res) {
 // EXPORTAR CONTROLLER
 // ======================================================
 
-export default {
-
+export {
     listarTurmas,
-
     cadastrarTurma,
-
     buscarTurma,
-
     editarTurma,
-
     excluirTurma
-
 };

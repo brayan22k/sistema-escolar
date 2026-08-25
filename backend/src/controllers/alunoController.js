@@ -5,6 +5,7 @@ import Aluno from '../models/Aluno.js';
 
 // ======================================================
 // LISTAR TODOS OS ALUNOS
+// GET /alunos
 // ======================================================
 
 async function listarAlunos(req, res) {
@@ -30,6 +31,7 @@ async function listarAlunos(req, res) {
 
 // ======================================================
 // CADASTRAR ALUNO
+// POST /alunos
 // ======================================================
 
 async function cadastrarAluno(req, res) {
@@ -82,6 +84,7 @@ async function cadastrarAluno(req, res) {
 
 // ======================================================
 // BUSCAR ALUNO POR ID
+// GET /alunos/:id
 // ======================================================
 
 async function buscarAluno(req, res) {
@@ -126,6 +129,7 @@ async function buscarAluno(req, res) {
 
 // ======================================================
 // EDITAR ALUNO
+// PUT /alunos/:id
 // ======================================================
 
 async function editarAluno(req, res) {
@@ -200,6 +204,7 @@ async function editarAluno(req, res) {
 
 // ======================================================
 // EXCLUIR ALUNO
+// DELETE /alunos/:id
 // ======================================================
 
 async function excluirAluno(req, res) {
@@ -259,6 +264,7 @@ async function excluirAluno(req, res) {
 // ======================================================
 // MISSÃO 002
 // VINCULAR ALUNO A UMA TURMA
+// PUT /alunos/:id/turma
 // ======================================================
 
 async function vincularTurma(req, res) {
@@ -322,18 +328,11 @@ async function vincularTurma(req, res) {
 // EXPORTAR CONTROLLER
 // ======================================================
 
-export default {
-
+export {
     cadastrarAluno,
-
     listarAlunos,
-
     buscarAluno,
-
     editarAluno,
-
     excluirAluno,
-
     vincularTurma
-
 };

@@ -1,29 +1,32 @@
 import Disciplina from '../models/Disciplina.js';
 
-// ======================================================
-// LISTAR TODAS AS DISCIPLINAS
-// GET /disciplinas
-// ======================================================
-export async function listarDisciplinas(req, res) {
-    try {
-        const disciplinas = await Disciplina.findAll();
+// ==========================================
+// LISTAR DISCIPLINAS
+// ==========================================
 
-        return res.status(200).json(disciplinas);
+async function listarDisciplinas(req, res) {
+    try {
+        const disciplinas = await Disciplina.findAll({
+            order: [['id', 'DESC']]
+        });
+
+        res.status(200).json(disciplinas);
+
     } catch (erro) {
         console.error('Erro ao listar disciplinas:', erro);
 
-        return res.status(500).json({
-            erro: 'Erro ao listar disciplinas',
-            detalhe: erro.message
+        res.status(500).json({
+            mensagem: 'Erro ao listar disciplinas.',
+            erro: erro.message
         });
     }
 }
 
-// ======================================================
-// BUSCAR DISCIPLINA POR ID
-// GET /disciplinas/:id
-// ======================================================
-export async function buscarDisciplina(req, res) {
+// ==========================================
+// BUSCAR DISCIPLINA
+// ==========================================
+
+async function buscarDisciplina(req, res) {
     try {
         const { id } = req.params;
 
@@ -31,97 +34,117 @@ export async function buscarDisciplina(req, res) {
 
         if (!disciplina) {
             return res.status(404).json({
-                erro: 'Disciplina não encontrada'
+                mensagem: 'Disciplina não encontrada.'
             });
         }
 
-        return res.status(200).json(disciplina);
+        res.status(200).json(disciplina);
+
     } catch (erro) {
         console.error('Erro ao buscar disciplina:', erro);
 
-        return res.status(500).json({
-            erro: 'Erro ao buscar disciplina',
-            detalhe: erro.message
+        res.status(500).json({
+            mensagem: 'Erro ao buscar disciplina.',
+            erro: erro.message
         });
     }
 }
 
-// ======================================================
+// ==========================================
 // CRIAR DISCIPLINA
-// POST /disciplinas
-// ======================================================
-export async function criarDisciplina(req, res) {
-    try {
-        const { nome, descricao } = req.body;
+// ==========================================
 
-        if (!nome || nome.trim() === '') {
+async function criarDisciplina(req, res) {
+    try {
+        const {
+            nome,
+            descricao
+        } = req.body;
+
+        if (!nome || !nome.trim()) {
             return res.status(400).json({
-                erro: 'O nome da disciplina é obrigatório'
+                mensagem: 'O nome da disciplina é obrigatório.'
+            });
+        }
+
+        const disciplinaExistente = await Disciplina.findOne({
+            where: {
+                nome: nome.trim()
+            }
+        });
+
+        if (disciplinaExistente) {
+            return res.status(409).json({
+                mensagem: 'Esta disciplina já está cadastrada.'
             });
         }
 
         const disciplina = await Disciplina.create({
             nome: nome.trim(),
-            descricao: descricao || null
+            descricao: descricao || ''
         });
 
-        return res.status(201).json(disciplina);
+        res.status(201).json(disciplina);
+
     } catch (erro) {
         console.error('Erro ao criar disciplina:', erro);
 
-        return res.status(500).json({
-            erro: 'Erro ao criar disciplina',
-            detalhe: erro.message
+        res.status(500).json({
+            mensagem: 'Erro ao cadastrar disciplina.',
+            erro: erro.message
         });
     }
 }
 
-// ======================================================
+// ==========================================
 // ATUALIZAR DISCIPLINA
-// PUT /disciplinas/:id
-// ======================================================
-export async function atualizarDisciplina(req, res) {
+// ==========================================
+
+async function atualizarDisciplina(req, res) {
     try {
         const { id } = req.params;
-        const { nome, descricao } = req.body;
 
         const disciplina = await Disciplina.findByPk(id);
 
         if (!disciplina) {
             return res.status(404).json({
-                erro: 'Disciplina não encontrada'
+                mensagem: 'Disciplina não encontrada.'
             });
         }
 
-        if (nome !== undefined && nome.trim() === '') {
+        const {
+            nome,
+            descricao
+        } = req.body;
+
+        if (!nome || !nome.trim()) {
             return res.status(400).json({
-                erro: 'O nome da disciplina não pode ficar vazio'
+                mensagem: 'O nome da disciplina é obrigatório.'
             });
         }
 
         await disciplina.update({
-            nome: nome !== undefined ? nome.trim() : disciplina.nome,
-            descricao: descricao !== undefined
-                ? descricao
-                : disciplina.descricao
+            nome: nome.trim(),
+            descricao: descricao || ''
         });
 
-        return res.status(200).json(disciplina);
+        res.status(200).json(disciplina);
+
     } catch (erro) {
         console.error('Erro ao atualizar disciplina:', erro);
 
-        return res.status(500).json({
-            erro: 'Erro ao atualizar disciplina',
-            detalhe: erro.message
+        res.status(500).json({
+            mensagem: 'Erro ao atualizar disciplina.',
+            erro: erro.message
         });
     }
 }
 
-// ======================================================
+// ==========================================
 // EXCLUIR DISCIPLINA
-// DELETE /disciplinas/:id
-// ======================================================
-export async function excluirDisciplina(req, res) {
+// ==========================================
+
+async function excluirDisciplina(req, res) {
     try {
         const { id } = req.params;
 
@@ -129,21 +152,30 @@ export async function excluirDisciplina(req, res) {
 
         if (!disciplina) {
             return res.status(404).json({
-                erro: 'Disciplina não encontrada'
+                mensagem: 'Disciplina não encontrada.'
             });
         }
 
         await disciplina.destroy();
 
-        return res.status(200).json({
-            mensagem: 'Disciplina excluída com sucesso'
+        res.status(200).json({
+            mensagem: 'Disciplina excluída com sucesso.'
         });
+
     } catch (erro) {
         console.error('Erro ao excluir disciplina:', erro);
 
-        return res.status(500).json({
-            erro: 'Erro ao excluir disciplina',
-            detalhe: erro.message
+        res.status(500).json({
+            mensagem: 'Erro ao excluir disciplina.',
+            erro: erro.message
         });
     }
 }
+
+export {
+    listarDisciplinas,
+    buscarDisciplina,
+    criarDisciplina,
+    atualizarDisciplina,
+    excluirDisciplina
+};

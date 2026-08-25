@@ -1,43 +1,20 @@
 import express from 'express';
 import cors from 'cors';
+
 import sequelize from './config/database.js';
-
-// ======================================================
-// ROTAS
-// ======================================================
-
-import alunosRoutes from './routes/alunos/routes.js';
-import disciplinaRoutes from './routes/disciplina/routes.js';
-import notasRoutes from './routes/Notas/routes.js';
-import professoresRoutes from './routes/professores/routes.js';
-import turmasRoutes from './routes/turmas/routes.js';
-
-// ======================================================
-// MODELS
-// ======================================================
-
-import './models/Aluno.js';
-import './models/Disciplina.js';
-import './models/Nota.js';
-import './models/Professor.js';
-import './models/Turma.js';
-
-// ======================================================
-// APP
-// ======================================================
+import routes from './routes/index.js';
 
 const app = express();
 
-// ======================================================
-// MIDDLEWARES
-// ======================================================
+const PORT = 3000;
 
 app.use(cors());
+
 app.use(express.json());
 
-// ======================================================
-// ROTA PRINCIPAL
-// ======================================================
+app.use(express.urlencoded({
+    extended: true
+}));
 
 app.get('/', (req, res) => {
     res.json({
@@ -45,23 +22,9 @@ app.get('/', (req, res) => {
     });
 });
 
-// ======================================================
-// ROTAS DA API
-// ======================================================
+console.log('ROTAS PRINCIPAIS CARREGADAS');
 
-app.use('/alunos', alunosRoutes);
-
-app.use('/disciplinas', disciplinaRoutes);
-
-app.use('/notas', notasRoutes);
-
-app.use('/professores', professoresRoutes);
-
-app.use('/turmas', turmasRoutes);
-
-// ======================================================
-// TRATAMENTO DE ERRO 404
-// ======================================================
+app.use(routes);
 
 app.use((req, res) => {
     res.status(404).json({
@@ -69,16 +32,6 @@ app.use((req, res) => {
         rota: req.originalUrl
     });
 });
-
-// ======================================================
-// PORTA
-// ======================================================
-
-const PORT = process.env.PORT || 3000;
-
-// ======================================================
-// CONEXÃO COM BANCO E INICIALIZAÇÃO
-// ======================================================
 
 async function iniciarServidor() {
     try {
@@ -88,15 +41,19 @@ async function iniciarServidor() {
 
         await sequelize.sync();
 
-        console.log('Banco de dados sincronizado com sucesso!');
+        console.log('Modelos sincronizados com sucesso!');
 
         app.listen(PORT, () => {
-            console.log(`Servidor rodando em http://localhost:${PORT}`);
+            console.log(
+                `Servidor rodando em http://localhost:${PORT}`
+            );
         });
 
     } catch (erro) {
-        console.error('Erro ao conectar/iniciar o servidor:');
-        console.error(erro);
+        console.error(
+            'Erro ao iniciar o servidor:',
+            erro
+        );
     }
 }
 

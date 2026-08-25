@@ -1,63 +1,50 @@
 import express from 'express';
 
-import alunoController from '../../controllers/alunoController.js';
+import {
+    listarAlunos,
+    cadastrarAluno,
+    buscarAluno,
+    editarAluno,
+    excluirAluno,
+    vincularTurma
+} from '../../controllers/alunoController.js';
 
-const routes = express.Router();
+const router = express.Router();
 
-
-// ======================================================
-// ALUNOS
-// ======================================================
-
+// ==========================================
 // LISTAR ALUNOS
 // GET /alunos
-routes.get(
-    '/alunos',
-    alunoController.listarAlunos
-);
+// ==========================================
+router.get('/', listarAlunos);
 
-
+// ==========================================
 // CADASTRAR ALUNO
 // POST /alunos
-routes.post(
-    '/alunos',
-    alunoController.cadastrarAluno
-);
+// ==========================================
+router.post('/', cadastrarAluno);
 
-
+// ==========================================
 // BUSCAR ALUNO POR ID
 // GET /alunos/:id
-routes.get(
-    '/alunos/:id',
-    alunoController.buscarAluno
-);
+// ==========================================
+router.get('/:id', buscarAluno);
 
-
+// ==========================================
 // EDITAR ALUNO
 // PUT /alunos/:id
-routes.put(
-    '/alunos/:id',
-    alunoController.editarAluno
-);
+// ==========================================
+router.put('/:id', editarAluno);
 
-
+// ==========================================
 // EXCLUIR ALUNO
 // DELETE /alunos/:id
-routes.delete(
-    '/alunos/:id',
-    alunoController.excluirAluno
-);
+// ==========================================
+router.delete('/:id', excluirAluno);
 
-
-// ======================================================
+// ==========================================
 // VINCULAR ALUNO À TURMA
-// ======================================================
-
 // PUT /alunos/:id/turma
-routes.put(
-    '/alunos/:id/turma',
-    alunoController.vincularTurma
-);
+// ==========================================
+router.put('/:id/turma', vincularTurma);
 
-
-export default routes;
+export default router;

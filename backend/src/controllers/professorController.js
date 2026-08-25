@@ -1,188 +1,111 @@
-// backend/src/controllers/professorController.js
-
 import Professor from '../models/Professor.js';
 
-
-// ==========================================
 // LISTAR PROFESSORES
-// ==========================================
-
-async function listarProfessores(req, res) {
-
+export async function listarProfessores(req, res) {
     try {
+        const professores = await Professor.findAll();
 
-        const professores =
-            await Professor.findAll();
-
-        res.status(200).json(professores);
-
+        res.json(professores);
     } catch (erro) {
-
-        console.error(erro);
+        console.error('Erro ao listar professores:', erro);
 
         res.status(500).json({
-            mensagem: 'Erro ao listar professores.'
+            erro: 'Erro ao listar professores',
+            detalhes: erro.message
         });
-
     }
-
 }
 
-
-// ==========================================
 // CADASTRAR PROFESSOR
-// ==========================================
-
-async function cadastrarProfessor(req, res) {
-
+export async function cadastrarProfessor(req, res) {
     try {
-
-        const {
-            nome,
-            email,
-            disciplina
-        } = req.body;
-
-
-        if (!nome || !email || !disciplina) {
-
-            return res.status(400).json({
-                mensagem:
-                    'Nome, e-mail e disciplina são obrigatórios.'
-            });
-
-        }
-
-
-        const professor =
-            await Professor.create({
-                nome,
-                email,
-                disciplina
-            });
-
+        const professor = await Professor.create(req.body);
 
         res.status(201).json(professor);
-
     } catch (erro) {
-
-        console.error(erro);
+        console.error('Erro ao cadastrar professor:', erro);
 
         res.status(500).json({
-            mensagem:
-                'Erro ao cadastrar professor.'
+            erro: 'Erro ao cadastrar professor',
+            detalhes: erro.message
         });
-
     }
-
 }
 
-
-// ==========================================
-// ATUALIZAR PROFESSOR
-// ==========================================
-
-async function atualizarProfessor(req, res) {
-
+// BUSCAR PROFESSOR
+export async function buscarProfessor(req, res) {
     try {
-
         const { id } = req.params;
 
-
-        const professor =
-            await Professor.findByPk(id);
-
+        const professor = await Professor.findByPk(id);
 
         if (!professor) {
-
             return res.status(404).json({
-                mensagem:
-                    'Professor não encontrado.'
+                erro: 'Professor não encontrado'
             });
-
         }
 
-
-        const {
-            nome,
-            email,
-            disciplina
-        } = req.body;
-
-
-        await professor.update({
-            nome,
-            email,
-            disciplina
-        });
-
-
-        res.status(200).json(professor);
-
+        res.json(professor);
     } catch (erro) {
-
-        console.error(erro);
+        console.error('Erro ao buscar professor:', erro);
 
         res.status(500).json({
-            mensagem:
-                'Erro ao atualizar professor.'
+            erro: 'Erro ao buscar professor',
+            detalhes: erro.message
         });
-
     }
-
 }
 
+// EDITAR PROFESSOR
+export async function editarProfessor(req, res) {
+    try {
+        const { id } = req.params;
 
-// ==========================================
+        const professor = await Professor.findByPk(id);
+
+        if (!professor) {
+            return res.status(404).json({
+                erro: 'Professor não encontrado'
+            });
+        }
+
+        await professor.update(req.body);
+
+        res.json(professor);
+    } catch (erro) {
+        console.error('Erro ao editar professor:', erro);
+
+        res.status(500).json({
+            erro: 'Erro ao editar professor',
+            detalhes: erro.message
+        });
+    }
+}
+
 // EXCLUIR PROFESSOR
-// ==========================================
-
-async function excluirProfessor(req, res) {
-
+export async function excluirProfessor(req, res) {
     try {
-
         const { id } = req.params;
 
-
-        const professor =
-            await Professor.findByPk(id);
-
+        const professor = await Professor.findByPk(id);
 
         if (!professor) {
-
             return res.status(404).json({
-                mensagem:
-                    'Professor não encontrado.'
+                erro: 'Professor não encontrado'
             });
-
         }
-
 
         await professor.destroy();
 
-
-        res.status(200).json({
-            mensagem:
-                'Professor excluído com sucesso.'
+        res.json({
+            mensagem: 'Professor excluído com sucesso!'
         });
-
     } catch (erro) {
-
-        console.error(erro);
+        console.error('Erro ao excluir professor:', erro);
 
         res.status(500).json({
-            mensagem:
-                'Erro ao excluir professor.'
+            erro: 'Erro ao excluir professor',
+            detalhes: erro.message
         });
-
     }
-
 }
-
-
-export {
-    listarProfessores,
-    cadastrarProfessor,
-    atualizarProfessor,
-    excluirProfessor
-};

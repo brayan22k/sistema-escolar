@@ -1,44 +1,25 @@
-// backend/src/routes/professores/routes.js
-
 import express from 'express';
 
 import {
     listarProfessores,
     cadastrarProfessor,
-    atualizarProfessor,
+    buscarProfessor,
+    editarProfessor,
     excluirProfessor
 } from '../../controllers/professorController.js';
 
-
 const router = express.Router();
 
+console.log('ARQUIVO PROFESSORES ROUTES FOI CARREGADO');
 
-// ==========================================
-// PROFESSORES
-// ==========================================
+router.get('/', listarProfessores);
 
-router.get(
-    '/professores',
-    listarProfessores
-);
+router.post('/', cadastrarProfessor);
 
+router.get('/:id', buscarProfessor);
 
-router.post(
-    '/professores',
-    cadastrarProfessor
-);
+router.put('/:id', editarProfessor);
 
-
-router.put(
-    '/professores/:id',
-    atualizarProfessor
-);
-
-
-router.delete(
-    '/professores/:id',
-    excluirProfessor
-);
-
+router.delete('/:id', excluirProfessor);
 
 export default router;

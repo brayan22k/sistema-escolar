@@ -1,22 +1,23 @@
 # Persistema - Sistema Escolar
 
 Sistema didático desenvolvido pelos alunos do 3º ano de Desenvolvimento de
-Sistemas. A Missão 003 introduz o boletim digital com lançamento e consulta de
-notas.
+Sistemas. A Missão 004 introduz o controle de frequência com registro de
+presença/ausência e identificação de alunos com baixa presença.
 
 O histórico de decisões e o estado entre conversas ficam em
 [CONTEXTO.md](CONTEXTO.md).
 
-## Missão 003 entregue
+## Missão 004 entregue
 
 O sistema permite:
 
-- cadastrar alunos, turmas e vincular alunos a uma turma;
-- lançar notas por aluno, disciplina e bimestre;
-- listar as notas cadastradas em uma tabela centralizada;
-- consultar o desempenho por disciplina e situação da nota;
-- calcular uma média geral e exibir um resumo do boletim;
-- manter a base da Missão 001 e 002 funcionando no mesmo painel.
+- registrar presença e ausência por aluno e data;
+- consultar a frequência registrada em uma tabela centralizada;
+- calcular o percentual de frequência de cada aluno;
+- classificar a situação (Frequência Boa, Atenção, Risco de Reprovação);
+- alertar alunos com frequência abaixo de 75%;
+- exibir um ranking das melhores frequências;
+- manter a base das Missões 001, 002 e 003 funcionando no mesmo painel.
 
 ## Como executar
 
@@ -42,6 +43,25 @@ npm run dev
 
 Acesse `http://localhost:5173`.
 
+### Testes de QA automatizados (validação até a Missão 004)
+
+Com o backend em execução (`npm.cmd run dev`), na pasta `backend`:
+
+```bash
+npm.cmd test
+```
+
+Alternativas no Windows/PowerShell:
+
+```bash
+node --test
+```
+
+- A suíte roda contra `http://localhost:3000` e cobre Alunos, Turmas, Disciplinas, Boletim (notas) e Frequências.
+- Esperado: **37 testes passando**.
+- No PowerShell, `npm` pode falhar por política de execução (`npm.ps1` não assinado); use `npm.cmd`.
+- Dados de teste são temporários (nome/email `_QA_`) e limpos ao final de cada suíte; resíduos de execuções abortadas devem ser removidos.
+
 ## Endpoints da Missão 003
 
 | Método | Endpoint | Finalidade |
@@ -64,14 +84,44 @@ Exemplo de cadastro:
 }
 ```
 
+## Endpoints da Missão 004
+
+| Método | Endpoint | Finalidade |
+| --- | --- | --- |
+| `GET` | `/frequencias` | Lista os registros de frequência |
+| `POST` | `/frequencias` | Registra uma presença/ausência |
+| `PUT` | `/frequencias/:id` | Edita um registro de frequência |
+| `DELETE` | `/frequencias/:id` | Exclui um registro de frequência |
+| `GET` | `/frequencias/resumo` | Resumo de frequência por aluno |
+| `GET` | `/frequencias/ranking` | Ranking das melhores frequências |
+
+O módulo rejeita registros duplicados (mesmo aluno e data) e valida que o aluno
+existe antes de salvar.
+
+Exemplo de cadastro:
+
+```json
+{
+  "aluno_id": 1,
+  "data_aula": "2026-08-26",
+  "presente": true
+}
+```
+
+O percentual de frequência é calculado por aluno e classificado: abaixo de 75%
+(Risco de Reprovação), entre 75% e 89% (Atenção) e 90% ou mais (Frequência Boa).
+
 ## Organização do código
 
 - `backend/src/models/Aluno.js`: modelo de aluno com `turma_id` opcional.
 - `backend/src/models/Turma.js`: modelo de turma.
 - `backend/src/models/Nota.js`: modelo de notas do boletim.
+- `backend/src/models/Frequencia.js`: modelo de frequência.
 - `backend/src/controllers/notaController.js`: regras de cadastro e consulta de notas.
+- `backend/src/controllers/frequenciaController.js`: regras de frequência (resumo, classificação e ranking).
 - `backend/src/routes/boletim/routes.js`: rotas da Missão 003.
-- `frontend/src/App.jsx`: painel com módulos de alunos, turmas e boletim.
+- `backend/src/routes/frequencias/routes.js`: rotas da Missão 004.
+- `frontend/src/App.jsx`: painel com módulos de alunos, turmas, boletim e frequência.
 
 Cada módulo do backend mantém suas rotas, controller e model separados. O
 arquivo `backend/src/routes/index.js` apenas registra os módulos existentes.
@@ -79,18 +129,22 @@ arquivo `backend/src/routes/index.js` apenas registra os módulos existentes.
 ## Padrão dos relatórios
 
 As listas de registros são apresentadas com tabela do Material UI. A tela de
-boletim segue o mesmo padrão: busca global, colunas objetivas e ações rápidas.
+frequência segue o mesmo padrão: busca global, colunas objetivas, ações rápidas
+e resumo/ranking de presença.
 
 ## Validações realizadas
 
 - Build do frontend executado com sucesso.
 - Sintaxe dos arquivos JavaScript do backend validada com `node --check`.
-- O fluxo contra o MySQL depende das credenciais configuradas em `backend/.env`.
+- Fluxo da Missão 004 validado contra o MySQL (criar, duplicidade 409, resumo, ranking, editar e excluir).
+- Suíte de QA automatizada cobrindo as Missões 001-004: 37 testes passando (`npm.cmd test` na pasta `backend` com o servidor no ar).
+- Script de teste corrigido em `backend/package.json` (`node --test`) para funcionar no Windows/Node 24.
 
 ## Próxima etapa
 
-A próxima missão pode ampliar o boletim com média por disciplina, ranking de
-alunos, dashboard do diretor e mini boletim individual.
+O QA até a Missão 004 está concluído. A pendência é a verificação visual no navegador
+do fluxo completo (chamada, resumo e ranking). A Missão 005 (controle de acesso/login)
+ainda não foi iniciada e só deve ser implementada quando solicitada.
 
 ## Guia pedagógico da Missão 003
 
@@ -152,3 +206,35 @@ A missao esta pronta quando:
 2. Solucao tecnica: novo modulo "turmas" com rotas e controller proprios.
 3. Evidencia: cadastro de turma + vinculacao de aluno + consulta.
 4. Aprendizado: separacao de responsabilidades e modularizacao.
+
+---
+
+# Guia pedagógico da Missão 004 - Frequência Inteligente
+
+## Objetivo
+
+- registrar presença e ausência por aluno e data;
+- consultar a frequência dos alunos;
+- calcular o percentual de presença;
+- identificar alunos com baixa frequência.
+
+## Modelagem sugerida
+
+- `frequencias`: id, aluno_id, data_aula, presente.
+- Relacionamento: `Aluno` possui muitos registros de `Frequencia`.
+
+## Checklist de QA
+
+- registro de presença funciona;
+- registro de falta funciona;
+- data preenchida;
+- aluno selecionado;
+- quantidade de registros correta;
+- sem duplicações (mesmo aluno e data).
+
+## Boss Challenge
+
+- calcular % de frequência do aluno;
+- classificar (Frequência Boa, Atenção, Risco de Reprovação);
+- alertar aluno abaixo de 75%;
+- criar ranking das melhores frequências.

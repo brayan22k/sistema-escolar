@@ -5,6 +5,7 @@ import Aluno from './models/Aluno.js';
 import Turma from './models/Turma.js';
 import Disciplina from './models/Disciplina.js';
 import Nota from './models/Nota.js';
+import Frequencia from './models/Frequencia.js';
 import routes from './routes/index.js';
 
 const app = express();
@@ -19,6 +20,8 @@ Turma.hasMany(Disciplina, { foreignKey: 'turma_id', as: 'disciplinas' });
 Disciplina.belongsTo(Turma, { foreignKey: 'turma_id', as: 'turma' });
 Aluno.hasMany(Nota, { foreignKey: 'aluno_id', as: 'notas' });
 Nota.belongsTo(Aluno, { foreignKey: 'aluno_id', as: 'aluno' });
+Aluno.hasMany(Frequencia, { foreignKey: 'aluno_id', as: 'frequencias' });
+Frequencia.belongsTo(Aluno, { foreignKey: 'aluno_id', as: 'aluno' });
 
 // Middlewares
 app.use(cors());

@@ -40,6 +40,7 @@ const menuItems = [
   { key: 'alunos', label: 'Alunos', description: 'Cadastro e consulta de estudantes' },
   { key: 'turmas', label: 'Turmas', description: 'Organização escolar' },
   { key: 'boletim', label: 'Boletim', description: 'Lançamento e consulta de notas' },
+  { key: 'frequencia', label: 'Frequência', description: 'Controle de presença dos alunos' },
 ];
 
 const initialNotaForm = {
@@ -54,37 +55,62 @@ const initialDisciplinaForm = {
   nome: '',
 };
 
+const initialFrequenciaForm = {
+  aluno_id: '',
+  data_aula: new Date().toISOString().slice(0, 10),
+  presente: 'true',
+};
+
+async function buscarJson(url, mensagemPadrao) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    let detalhe = '';
+    try {
+      const corpo = await response.json();
+      detalhe = corpo.erro || '';
+    } catch {
+      detalhe = '';
+    }
+    throw new Error(detalhe || mensagemPadrao);
+  }
+  return response.json();
+}
+
 function App() {
   const [form, setForm] = useState(initialForm);
   const [alunos, setAlunos] = useState([]);
   const [turmas, setTurmas] = useState([]);
   const [disciplinas, setDisciplinas] = useState([]);
   const [notas, setNotas] = useState([]);
+  const [frequencias, setFrequencias] = useState([]);
+  const [resumoFrequencia, setResumoFrequencia] = useState([]);
+  const [rankingFrequencia, setRankingFrequencia] = useState([]);
   const [turmaForm, setTurmaForm] = useState(initialTurmaForm);
   const [disciplinaForm, setDisciplinaForm] = useState(initialDisciplinaForm);
   const [notaForm, setNotaForm] = useState(initialNotaForm);
+  const [frequenciaForm, setFrequenciaForm] = useState(initialFrequenciaForm);
   const [alunosSelecionados, setAlunosSelecionados] = useState({});
   const [alunoBusca, setAlunoBusca] = useState('');
   const [turmaBusca, setTurmaBusca] = useState('');
   const [disciplinaBusca, setDisciplinaBusca] = useState('');
   const [notaBusca, setNotaBusca] = useState('');
+  const [frequenciaBusca, setFrequenciaBusca] = useState('');
   const [alunoEmEdicao, setAlunoEmEdicao] = useState(null);
   const [turmaEmEdicao, setTurmaEmEdicao] = useState(null);
   const [disciplinaEmEdicao, setDisciplinaEmEdicao] = useState(null);
   const [notaEmEdicao, setNotaEmEdicao] = useState(null);
+  const [frequenciaEmEdicao, setFrequenciaEmEdicao] = useState(null);
   const [message, setMessage] = useState('');
   const [turmaMessage, setTurmaMessage] = useState('');
   const [notaMessage, setNotaMessage] = useState('');
+  const [frequenciaMessage, setFrequenciaMessage] = useState('');
   const [view, setView] = useState('dashboard');
   const [loggedIn, setLoggedIn] = useState(false);
   const [loginForm, setLoginForm] = useState({ usuario: '', senha: '' });
 
   const carregarAlunos = async () => {
     try {
-      const response = await fetch('/api/alunos');
-      if (!response.ok) throw new Error('Erro ao carregar alunos');
-      const data = await response.json();
-      setAlunos(data);
+      setAlunos(await buscarJson('/api/alunos', 'Erro ao carregar alunos. Verifique se o backend está rodando.'));
     } catch (error) {
       console.error(error);
     }
@@ -92,9 +118,7 @@ function App() {
 
   const carregarTurmas = async () => {
     try {
-      const response = await fetch('/api/turmas');
-      if (!response.ok) throw new Error('Erro ao carregar turmas');
-      setTurmas(await response.json());
+      setTurmas(await buscarJson('/api/turmas', 'Erro ao carregar turmas. Verifique se o backend está rodando.'));
     } catch (error) {
       setTurmaMessage(error.message);
     }
@@ -102,9 +126,7 @@ function App() {
 
   const carregarNotas = async () => {
     try {
-      const response = await fetch('/api/notas');
-      if (!response.ok) throw new Error('Erro ao carregar notas');
-      setNotas(await response.json());
+      setNotas(await buscarJson('/api/notas', 'Erro ao carregar notas. Verifique se o backend está rodando.'));
     } catch (error) {
       setNotaMessage(error.message);
     }
@@ -112,11 +134,33 @@ function App() {
 
   const carregarDisciplinas = async () => {
     try {
-      const response = await fetch('/api/disciplinas');
-      if (!response.ok) throw new Error('Erro ao carregar disciplinas');
-      setDisciplinas(await response.json());
+      setDisciplinas(await buscarJson('/api/disciplinas', 'Erro ao carregar disciplinas. Verifique se o backend está rodando.'));
     } catch (error) {
       setNotaMessage(error.message);
+    }
+  };
+
+  const carregarFrequencias = async () => {
+    try {
+      setFrequencias(await buscarJson('/api/frequencias', 'Erro ao carregar frequências. Verifique se o backend está rodando.'));
+    } catch (error) {
+      setFrequenciaMessage(error.message);
+    }
+  };
+
+  const carregarResumoFrequencia = async () => {
+    try {
+      setResumoFrequencia(await buscarJson('/api/frequencias/resumo', 'Erro ao carregar resumo de frequência.'));
+    } catch (error) {
+      setFrequenciaMessage(error.message);
+    }
+  };
+
+  const carregarRankingFrequencia = async () => {
+    try {
+      setRankingFrequencia(await buscarJson('/api/frequencias/ranking', 'Erro ao carregar ranking de frequência.'));
+    } catch (error) {
+      setFrequenciaMessage(error.message);
     }
   };
 
@@ -125,6 +169,9 @@ function App() {
     carregarTurmas();
     carregarDisciplinas();
     carregarNotas();
+    carregarFrequencias();
+    carregarResumoFrequencia();
+    carregarRankingFrequencia();
   }, []);
 
   const handleChange = (event) => {
@@ -141,6 +188,16 @@ function App() {
     event.preventDefault();
     if (loginForm.usuario && loginForm.senha) {
       setLoggedIn(true);
+      setTurmaMessage('');
+      setNotaMessage('');
+      setFrequenciaMessage('');
+      carregarAlunos();
+      carregarTurmas();
+      carregarDisciplinas();
+      carregarNotas();
+      carregarFrequencias();
+      carregarResumoFrequencia();
+      carregarRankingFrequencia();
     }
   };
 
@@ -157,6 +214,11 @@ function App() {
   const handleNotaChange = (event) => {
     const { name, value } = event.target;
     setNotaForm({ ...notaForm, [name]: value });
+  };
+
+  const handleFrequenciaChange = (event) => {
+    const { name, value } = event.target;
+    setFrequenciaForm({ ...frequenciaForm, [name]: value });
   };
 
   const handleDisciplinaSubmit = async (event) => {
@@ -212,6 +274,59 @@ function App() {
     } catch (error) {
       setNotaMessage(error.message);
     }
+  };
+
+  const handleFrequenciaSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+      const response = await fetch(frequenciaEmEdicao ? `/api/frequencias/${frequenciaEmEdicao}` : '/api/frequencias', {
+        method: frequenciaEmEdicao ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          aluno_id: Number(frequenciaForm.aluno_id),
+          data_aula: frequenciaForm.data_aula,
+          presente: frequenciaForm.presente === 'true',
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.erro || 'Erro ao registrar frequência');
+      }
+
+      setFrequenciaMessage(frequenciaEmEdicao ? 'Frequência atualizada com sucesso!' : 'Frequência registrada com sucesso!');
+      setFrequenciaForm(initialFrequenciaForm);
+      setFrequenciaEmEdicao(null);
+      carregarFrequencias();
+      carregarResumoFrequencia();
+      carregarRankingFrequencia();
+    } catch (error) {
+      setFrequenciaMessage(error.message);
+    }
+  };
+
+  const editarFrequencia = (frequencia) => {
+    setFrequenciaEmEdicao(frequencia.id);
+    setFrequenciaForm({
+      aluno_id: String(frequencia.aluno_id),
+      data_aula: frequencia.data_aula,
+      presente: frequencia.presente ? 'true' : 'false',
+    });
+    setView('frequencia');
+  };
+
+  const excluirFrequencia = async (frequencia) => {
+    if (!window.confirm(`Excluir o registro de frequência de ${frequencia.aluno?.nome || 'este aluno'}?`)) return;
+    const response = await fetch(`/api/frequencias/${frequencia.id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      setFrequenciaMessage('Não foi possível excluir o registro de frequência.');
+      return;
+    }
+    setFrequenciaMessage('Registro de frequência excluído com sucesso!');
+    carregarFrequencias();
+    carregarResumoFrequencia();
+    carregarRankingFrequencia();
   };
 
   const handleTurmaSubmit = async (event) => {
@@ -407,6 +522,17 @@ function App() {
     return `${alunoNome} ${nota.disciplina} ${nota.bimestre}`.toLowerCase().includes(notaBusca.toLowerCase());
   });
 
+  const frequenciasFiltradas = frequencias.filter((frequencia) => {
+    const alunoNome = frequencia.aluno?.nome || '';
+    return `${alunoNome} ${frequencia.data_aula}`.toLowerCase().includes(frequenciaBusca.toLowerCase());
+  });
+
+  const formatarData = (data) => {
+    if (!data) return '—';
+    const [ano, mes, dia] = String(data).slice(0, 10).split('-');
+    return `${dia}/${mes}/${ano}`;
+  };
+
   const resumoBoletim = alunos.map((aluno) => {
     const notasAluno = notas.filter((nota) => Number(nota.aluno_id) === Number(aluno.id));
     const media = notasAluno.length
@@ -492,7 +618,7 @@ function App() {
             </form>
 
             <Typography variant="body2" color="text.secondary" textAlign="center">
-              Login ainda será implementado com autenticação real no próximo passo.
+              Acesso provisório ao sistema. Preencha usuário e senha para entrar.
             </Typography>
           </Stack>
         </Paper>
@@ -820,7 +946,17 @@ function App() {
               </Typography>
 
               {turmaMessage && (
-                <Alert severity={turmaMessage.includes('sucesso') ? 'success' : 'error'} sx={{ mb: 2 }}>
+                <Alert
+                  severity={turmaMessage.includes('sucesso') ? 'success' : 'error'}
+                  sx={{ mb: 2 }}
+                  action={
+                    turmaMessage.includes('carregar') ? (
+                      <Button color="inherit" size="small" onClick={carregarTurmas}>
+                        Tentar novamente
+                      </Button>
+                    ) : null
+                  }
+                >
                   {turmaMessage}
                 </Alert>
               )}
@@ -982,6 +1118,206 @@ function App() {
                     </Box>
                   );
                 })}
+              </Paper>
+            </Box>
+          ) : view === 'frequencia' ? (
+            <Box>
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
+                Controle de Frequência
+              </Typography>
+
+              {frequenciaMessage && (
+                <Alert
+                  severity={frequenciaMessage.includes('sucesso') ? 'success' : 'error'}
+                  sx={{ mb: 2 }}
+                >
+                  {frequenciaMessage}
+                </Alert>
+              )}
+
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Registrar Frequência</Typography>
+                <form onSubmit={handleFrequenciaSubmit}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={4}>
+                      <TextField select fullWidth label="Aluno" name="aluno_id" value={frequenciaForm.aluno_id} onChange={handleFrequenciaChange} required>
+                        {alunos.map((aluno) => (
+                          <MenuItem key={aluno.id} value={aluno.id}>{aluno.nome}</MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Data" name="data_aula" type="date" value={frequenciaForm.data_aula} onChange={handleFrequenciaChange} InputLabelProps={{ shrink: true }} required />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField select fullWidth label="Presença" name="presente" value={frequenciaForm.presente} onChange={handleFrequenciaChange} required>
+                        <MenuItem value="true">Presente</MenuItem>
+                        <MenuItem value="false">Ausente</MenuItem>
+                      </TextField>
+                    </Grid>
+                  </Grid>
+
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
+                    <Button type="submit" variant="contained" size="large">{frequenciaEmEdicao ? 'Atualizar frequência' : 'Registrar'}</Button>
+                    <Button variant="outlined" size="large" onClick={() => { setFrequenciaForm(initialFrequenciaForm); setFrequenciaEmEdicao(null); }}>Limpar</Button>
+                  </Stack>
+                </form>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Painel de frequência</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f5f7ff' }}>
+                      <Typography variant="body2" color="text.secondary">Total de registros</Typography>
+                      <Typography variant="h5" fontWeight={700}>{frequencias.length}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f5fff7' }}>
+                      <Typography variant="body2" color="text.secondary">Presenças</Typography>
+                      <Typography variant="h5" fontWeight={700}>{frequencias.filter((item) => item.presente).length}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: '#fff1f1' }}>
+                      <Typography variant="body2" color="text.secondary">Ausências</Typography>
+                      <Typography variant="h5" fontWeight={700}>{frequencias.filter((item) => !item.presente).length}</Typography>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Frequência por aluno</Typography>
+                {resumoFrequencia.length === 0 ? (
+                  <Typography color="text.secondary">Nenhuma frequência registrada ainda.</Typography>
+                ) : (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Aluno</TableCell>
+                          <TableCell align="center">Registros</TableCell>
+                          <TableCell align="center">Presenças</TableCell>
+                          <TableCell align="center">Faltas</TableCell>
+                          <TableCell align="center">% Frequência</TableCell>
+                          <TableCell>Situação</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {resumoFrequencia.map((item) => (
+                          <TableRow key={item.aluno.id} hover>
+                            <TableCell>{item.aluno.nome}</TableCell>
+                            <TableCell align="center">{item.total}</TableCell>
+                            <TableCell align="center">{item.presencas}</TableCell>
+                            <TableCell align="center">{item.faltas}</TableCell>
+                            <TableCell align="center">{item.percentual === null ? '—' : `${item.percentual.toFixed(1)}%`}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={item.situacao}
+                                color={item.cor === 'success' ? 'success' : item.cor === 'warning' ? 'warning' : item.cor === 'error' ? 'error' : 'default'}
+                                size="small"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Alerta: alunos com frequência abaixo de 75%</Typography>
+                {resumoFrequencia.filter((item) => item.percentual !== null && item.percentual < 75).length === 0 ? (
+                  <Typography color="text.secondary">Nenhum aluno abaixo de 75% de frequência. 🎉</Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {resumoFrequencia
+                      .filter((item) => item.percentual !== null && item.percentual < 75)
+                      .map((item) => (
+                        <Alert key={item.aluno.id} severity="error">
+                          {item.aluno.nome} está com {item.percentual.toFixed(1)}% de frequência.
+                        </Alert>
+                      ))}
+                  </Stack>
+                )}
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Ranking de frequência da turma</Typography>
+                {rankingFrequencia.length === 0 ? (
+                  <Typography color="text.secondary">Sem dados para ranking.</Typography>
+                ) : (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>#</TableCell>
+                          <TableCell>Aluno</TableCell>
+                          <TableCell align="center">% Frequência</TableCell>
+                          <TableCell>Situação</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {rankingFrequencia.map((item, indice) => (
+                          <TableRow key={item.aluno.id} hover>
+                            <TableCell>{indice + 1}º</TableCell>
+                            <TableCell>{item.aluno.nome}</TableCell>
+                            <TableCell align="center">{item.percentual.toFixed(1)}%</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={item.situacao}
+                                color={item.cor === 'success' ? 'success' : item.cor === 'warning' ? 'warning' : item.cor === 'error' ? 'error' : 'default'}
+                                size="small"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+                  <Typography variant="h6">Registros de frequência</Typography>
+                  <TextField size="small" label="Buscar registro" value={frequenciaBusca} onChange={(event) => setFrequenciaBusca(event.target.value)} />
+                </Stack>
+
+                {frequenciasFiltradas.length === 0 ? (
+                  <Typography color="text.secondary">Nenhum registro cadastrado ainda.</Typography>
+                ) : (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Aluno</TableCell>
+                          <TableCell>Data</TableCell>
+                          <TableCell>Presença</TableCell>
+                          <TableCell align="right">Ações</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {frequenciasFiltradas.map((frequencia) => (
+                          <TableRow key={frequencia.id} hover>
+                            <TableCell>{frequencia.aluno?.nome || 'Aluno removido'}</TableCell>
+                            <TableCell>{formatarData(frequencia.data_aula)}</TableCell>
+                            <TableCell>
+                              <Chip label={frequencia.presente ? 'Presente' : 'Ausente'} color={frequencia.presente ? 'success' : 'error'} size="small" />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Button size="small" onClick={() => editarFrequencia(frequencia)}>Editar</Button>
+                              <Button size="small" color="error" onClick={() => excluirFrequencia(frequencia)}>Excluir</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Paper>
             </Box>
           ) : (

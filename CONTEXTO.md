@@ -49,10 +49,10 @@ Node.js/Express.
 
 - Confirmar visualmente no navegador o fluxo completo da Missão 004 (chamada, resumo e ranking).
 - Resolver pendências anteriores das Missões 002/003 pendentes de verificação no navegador.
-- A Missão 005 está apenas com o arquivo `🎯 MISSÃO 005 - OPERAÇÃO ESCOLA SEGURA.txt` criado, mas ainda contém o conteúdo da Missão 004; o texto real da Missão 005 ainda não foi escrito e a implementação não foi iniciada.
+- O arquivo `🎯 MISSÃO 005 - OPERAÇÃO ESCOLA SEGURA.txt` foi reescrito com o conteúdo real da Missão 5: login/controle de acesso do professor + tela de chamada exclusiva da disciplina do professor logado, com um checkbox de falta por aula (não mais um único checkbox por sessão). A implementação da Missão 5 ainda NÃO foi iniciada e só deve começar quando o usuário pedir.
 - Manter `DB_SYNC_FORCE=false` ao testar dados persistidos.
 - Ajustar o vínculo de alunos por turma com operação de desvínculo e revínculo em fluxo contínuo.
-- Um front de "chamada por turma/matéria" (com plano de aula, quantidade de aulas e checkbox de falta por aluno) foi iniciado em edição, mas as alterações não commitadas foram descartadas via `git restore` a pedido do usuário; o repositório está limpo, alinhado ao commit `9ad7ee7` (Missão 4). Essa evolução da frequência fica para retomar quando a Missão 5 (ou uma missão específica) for pedida.
+- Um front de "chamada por turma/matéria" (com plano de aula, quantidade de aulas e checkbox de falta por aluno) foi iniciado em edição, mas as alterações não commitadas foram descartadas via `git restore` a pedido do usuário; o repositório está limpo, alinhado ao commit `9ad7ee7` (Missão 4). Essa evolução da frequência é a base da Missão 5 e fica para retomar quando for pedida.
 - Atualizar esta seção conforme cada pendência for resolvida.
 
 ## Como retomar em caso de perda de conexão
@@ -98,8 +98,8 @@ Node.js/Express.
 ## Última atualização
 
 - Data: 2026-08-29
-- Ação: Descartadas (via `git restore`) as alterações não commitadas que ampliavam a tela de frequência (chamada por turma/matéria com plano de aula e checkbox de falta). O repositório voltou ao estado limpo do commit `9ad7ee7`, sincronizado com `origin/main`. Nenhuma implementação nova foi mantida.
-- Próximo passo: a evolução da tela de frequência (chamada por turma/matéria, plano de aula, quantidade de aulas e checkbox de falta) e a Missão 005 (login/controle de acesso) ficam para serem retomadas quando o usuário pedir explicitamente, na próxima semana. Até lá, não implementar nada além do que já está commitado (Missão 004).
+- Ação: Descartadas (via `git restore`) as alterações não commitadas que ampliavam a tela de frequência (chamada por turma/matéria com plano de aula e checkbox de falta), voltando o repositório ao estado limpo do commit `9ad7ee7`. Em seguida, o texto do arquivo `🎯 MISSÃO 005 - OPERAÇÃO ESCOLA SEGURA.txt` foi reescrito com o escopo real da Missão 5: login do professor + tela de chamada exclusiva da disciplina dele, com um checkbox de falta por aula lançada (quando a quantidade de aulas for maior que 1, um checkbox por aula, não apenas um por sessão).
+- Próximo passo: a implementação da Missão 005 (login/controle de acesso do professor e tela de chamada com checkbox por aula) só deve começar quando o usuário pedir explicitamente. Até lá, não implementar nada além do que já está commitado (Missão 004).
 
 ## Como atualizar
 

@@ -143,8 +143,12 @@ e resumo/ranking de presença.
 ## Próxima etapa
 
 O QA até a Missão 004 está concluído. A pendência é a verificação visual no navegador
-do fluxo completo (chamada, resumo e ranking). A Missão 005 (controle de acesso/login)
-ainda não foi iniciada e só deve ser implementada quando solicitada.
+do fluxo completo (chamada, resumo e ranking). A Missão 005 (login do professor e
+controle de acesso) já tem o texto definido em
+`🎯 MISSÃO 005 - OPERAÇÃO ESCOLA SEGURA.txt`: cada professor faz login e, ao entrar,
+vê a tela de chamada apenas da sua disciplina, com um checkbox de falta para cada
+aula lançada (não apenas um checkbox por sessão). A implementação ainda não foi
+iniciada e só deve começar quando solicitada.
 
 ## Guia pedagógico da Missão 003
 

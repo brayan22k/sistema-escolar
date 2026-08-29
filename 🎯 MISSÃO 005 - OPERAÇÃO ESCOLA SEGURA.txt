@@ -1,6 +1,6 @@
-🎯 MISSÃO 004 - OPERAÇÃO FREQUÊNCIA INTELIGENTE
+🎯 MISSÃO 005 - OPERAÇÃO ESCOLA SEGURA
 DS QUEST MASTER
-Sprint 04 - Quem Está Frequentando as Aulas?
+Sprint 05 - Quem Pode Entrar no Sistema?
 📖 CONTEXTO
 
 O sistema da escola já consegue:
@@ -11,86 +11,101 @@ O sistema da escola já consegue:
 
 ✅ Registrar notas
 
-Mas um novo problema apareceu.
+✅ Controlar frequência
 
-A coordenação descobriu que alguns alunos estão faltando muito e ninguém percebeu a tempo.
+Mas até agora qualquer pessoa consegue abrir o sistema e mexer em tudo.
 
-A direção precisa acompanhar a frequência dos estudantes antes que o problema afete o desempenho escolar.
+A direção percebeu um novo risco: cada professor deveria enxergar e lançar apenas
+o que é da sua disciplina, não o sistema inteiro.
 
 Sua Software House recebeu uma nova solicitação:
 
-"Precisamos controlar a presença dos alunos e identificar rapidamente quem está com baixa frequência."
+"Precisamos que cada professor faça login e, ao entrar, veja somente a chamada
+da disciplina que ele leciona. Nenhum professor pode mexer na chamada de outra
+matéria."
 
 🎯 MISSÃO
 
-Criar o primeiro módulo de controle de frequência.
+Criar o módulo de login e controle de acesso, e usar esse login para liberar a
+tela de chamada de cada professor.
 
 O sistema deverá permitir:
 
-✅ Registrar presença
+✅ Login do professor (usuário e senha)
 
-✅ Registrar ausência
+✅ Vincular o professor logado à(s) disciplina(s) que ele leciona
 
-✅ Consultar frequência dos alunos
+✅ Exibir, após o login, a tela de chamada apenas da disciplina do professor
 
-✅ Identificar alunos com baixa presença
+✅ Bloquear o acesso de quem não estiver logado
 
 👥 RESPONSABILIDADES DO SQUAD
 🎨 Desenvolvedor Front-End
 
-Criar uma tela de chamada contendo:
-
-Registro de Frequência
+Criar uma tela de login contendo:
 
 Campos:
 
-Aluno
-Data
-Presente (Sim/Não)
-Botão Registrar
+Usuário
+Senha
+Botão Entrar
 
-Além disso, exibir uma tabela com as presenças registradas.
+Após o login, criar a tela de "Fazer Chamada" do professor, contendo:
+
+Campos do cabeçalho da chamada:
+
+Turma (relacionada à disciplina do professor logado)
+Disciplina (preenchida automaticamente pelo professor logado)
+Data da aula
+Quantidade de aulas
+Título do plano de aula
+
+Lista de alunos da turma/disciplina:
+
+Cada aluno aparece em uma linha
+Ao lado de cada aluno, um checkbox de falta para CADA aula lançada
+  (se a quantidade de aulas for 2, o aluno tem 2 checkboxes; se for 3,
+  tem 3 checkboxes — um checkbox marcado registra falta naquela aula)
+Botão Salvar Chamada
 
 ⚙️ Desenvolvedor Back-End
 
-Criar estrutura JavaScript para armazenar:
+Criar estrutura para autenticação simples:
 
-Aluno
-Data
-Presença
-
-
-Exemplo:
-
-João
-26/08/2026
-Presente
-
+Usuário (professor)
+Senha
+Disciplina(s) vinculada(s)
 
 Deve permitir:
 
-Adicionar frequência
-Contar presenças
-Contar faltas
+Validar login
+Identificar qual professor está logado
+Filtrar a chamada pela disciplina do professor logado
+Registrar uma falta por aula (não apenas uma falta por dia)
+Impedir que o professor lance chamada de disciplina que não é dele
+
 🗄️ Desenvolvedor Banco de Dados
 
 Criar a modelagem:
 
-FREQUENCIAS
+PROFESSORES
 id
-aluno_id
-data_aula
-presente
-
+nome
+usuario
+senha
+disciplina_id (ou tabela de vínculo, se o professor tiver mais de uma disciplina)
 
 Relacionamento:
 
-Aluno
+Professor
 ↓
-Possui
+Leciona
 ↓
-Muitos Registros de Frequência
+Uma ou mais Disciplinas
 
+A frequência já registrada (turma, disciplina, data, plano de aula, quantidade
+de aulas) deve passar a guardar também qual aula específica cada falta pertence,
+quando a quantidade de aulas for maior que 1.
 
 Criar o diagrama atualizado.
 
@@ -100,17 +115,19 @@ Criar checklist:
 
 Validação
 
-✅ Registro de presença funciona
+✅ Login com usuário e senha corretos funciona
 
-✅ Registro de falta funciona
+✅ Login com usuário/senha errados é bloqueado
 
-✅ Data preenchida
+✅ Professor só enxerga a disciplina dele
 
-✅ Aluno selecionado
+✅ Tela de chamada exibe todos os alunos da turma
 
-✅ Quantidade de registros correta
+✅ Quantidade de checkboxes por aluno é igual à quantidade de aulas informada
 
-✅ Sem duplicações
+✅ Cada checkbox marcado gera uma falta na aula correspondente
+
+✅ Sem acesso à chamada sem login
 
 📋 Scrum Master
 
@@ -124,11 +141,13 @@ Coordenar a apresentação
 
 O Squad deverá apresentar:
 
-✅ Tela de frequência
+✅ Tela de login
 
-✅ Estrutura JavaScript funcionando
+✅ Tela de chamada exclusiva do professor logado
 
-✅ Modelo de banco de dados
+✅ Checkbox de falta por aula (um por aula lançada)
+
+✅ Modelo de banco de dados atualizado
 
 ✅ Checklist de testes
 
@@ -137,27 +156,27 @@ O Squad deverá apresentar:
 💡 DICAS PROGRESSIVAS
 Dica 1
 
-Como contar presenças e faltas?
+Como guardar quem está logado no front-end?
 
 Pesquise:
 
-contador javascript
+estado de autenticação react
 
 Dica 2
 
-Como armazenar datas?
+Como gerar vários checkboxes a partir de um número (quantidade de aulas)?
 
 Pesquise:
 
-new Date()
+Array.from length javascript
 
 Dica 3
 
-Como calcular percentual?
+Como impedir acesso sem login?
 
 Pesquise:
 
-calcular porcentagem javascript
+rota protegida middleware express
 
 👑 BOSS CHALLENGE
 
@@ -165,29 +184,19 @@ Após concluir a missão principal:
 
 Nível 1
 
-Calcular automaticamente:
-
-% de frequência do aluno
+Criar senha criptografada (não salvar senha em texto puro).
 
 Nível 2
 
-Classificar:
-
-🟢 Frequência Boa
-
-🟡 Atenção
-
-🔴 Risco de Reprovação
+Criar diferentes perfis de acesso (professor e coordenador).
 
 Nível 3
 
-Criar alerta:
-
-Aluno abaixo de 75%
+Permitir que o coordenador veja a chamada de todas as disciplinas.
 
 Nível 4
 
-Criar ranking das melhores frequências da turma.
+Registrar um log de quem fez login e quando.
 
 🎮 SISTEMA DE XP
 Atividade	XPFront-End concluído	+100
@@ -203,23 +212,23 @@ Boss Challenge	+100
 🚀 SIDE QUESTS (PARA GRUPOS RÁPIDOS)
 Side Quest 1
 
-Criar painel do coordenador.
+Criar tela de "esqueci minha senha".
 
 Side Quest 2
 
-Mostrar frequência por turma.
+Mostrar o nome do professor logado no topo do sistema.
 
 Side Quest 3
 
-Criar gráfico de presença.
+Criar botão de logout.
 
 Side Quest 4
 
-Criar relatório dos alunos em risco.
+Bloquear tentativas de login após várias senhas erradas.
 
 Side Quest 5
 
-Adicionar filtro por data.
+Mostrar histórico de chamadas feitas pelo professor.
 
 🎤 APRESENTAÇÃO FINAL
 
@@ -229,9 +238,9 @@ Cada Squad terá:
 
 Para explicar:
 
-Como registraram as presenças?
-Como calcularam a frequência?
-Como identificaram alunos em risco?
+Como funciona o login?
+Como o professor é vinculado à disciplina?
+Como o checkbox por aula representa a falta?
 Qual foi a principal dificuldade?
 Como resolveram o problema?
 📊 MENÇÃO DA MISSÃO
@@ -255,18 +264,16 @@ Sem entrega
 
 Ao final da apresentação, faça a provocação:
 
-"Agora a escola consegue cadastrar alunos, organizar turmas, registrar notas e controlar frequência.
+"Agora a escola consegue cadastrar alunos, organizar turmas, registrar notas,
+controlar frequência e proteger o acesso de cada professor.
 
-Mas quem pode acessar essas informações?
-
-Será que qualquer pessoa deveria conseguir entrar no sistema?
-
-Na próxima missão, vocês terão que proteger a escola criando o sistema de Login e Controle de Acesso."
+Mas e os pais e os próprios alunos? Eles também deveriam conseguir consultar
+suas informações, do jeito certo, sem mexer no que não é deles."
 
 🔥 FRASE DE ABERTURA
 
-"Uma escola sem controle de frequência é como um aplicativo sem usuários.
+"Um sistema sem controle de acesso é uma sala de aula sem porta.
 
-Os dados existem, mas ninguém sabe quem realmente está participando.
+Qualquer um entra, qualquer um mexe.
 
-Hoje o desafio é descobrir quem está presente e quem está desaparecendo do sistema." 🚀
+Hoje o desafio é dar a cada professor a chave certa: a da sua própria disciplina." 🚀

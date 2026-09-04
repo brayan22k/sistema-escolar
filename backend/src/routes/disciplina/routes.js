@@ -8,16 +8,47 @@ import {
     excluirDisciplina
 } from '../../controllers/disciplinaController.js';
 
+import { autenticarToken } from '../../middlewares/authMiddleware.js';
+import { permitirPerfis } from '../../middlewares/perfilMiddleware.js';
+
 const router = express.Router();
 
-router.get('/', listarDisciplinas);
+// LISTAR DISCIPLINAS
+router.get(
+    '/',
+    autenticarToken,
+    listarDisciplinas
+);
 
-router.get('/:id', buscarDisciplina);
+// BUSCAR DISCIPLINA
+router.get(
+    '/:id',
+    autenticarToken,
+    buscarDisciplina
+);
 
-router.post('/', criarDisciplina);
+// CRIAR DISCIPLINA - SOMENTE ADMIN
+router.post(
+    '/',
+    autenticarToken,
+    permitirPerfis('admin'),
+    criarDisciplina
+);
 
-router.put('/:id', atualizarDisciplina);
+// EDITAR DISCIPLINA - SOMENTE ADMIN
+router.put(
+    '/:id',
+    autenticarToken,
+    permitirPerfis('admin'),
+    atualizarDisciplina
+);
 
-router.delete('/:id', excluirDisciplina);
+// EXCLUIR DISCIPLINA - SOMENTE ADMIN
+router.delete(
+    '/:id',
+    autenticarToken,
+    permitirPerfis('admin'),
+    excluirDisciplina
+);
 
 export default router;

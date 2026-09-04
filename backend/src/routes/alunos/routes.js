@@ -9,42 +9,20 @@ import {
     vincularTurma
 } from '../../controllers/alunoController.js';
 
+import { autenticarToken } from '../../middlewares/authMiddleware.js';
+
 const router = express.Router();
 
-// ==========================================
-// LISTAR ALUNOS
-// GET /alunos
-// ==========================================
-router.get('/', listarAlunos);
+router.get('/', autenticarToken, listarAlunos);
 
-// ==========================================
-// CADASTRAR ALUNO
-// POST /alunos
-// ==========================================
-router.post('/', cadastrarAluno);
+router.post('/', autenticarToken, cadastrarAluno);
 
-// ==========================================
-// BUSCAR ALUNO POR ID
-// GET /alunos/:id
-// ==========================================
-router.get('/:id', buscarAluno);
+router.get('/:id', autenticarToken, buscarAluno);
 
-// ==========================================
-// EDITAR ALUNO
-// PUT /alunos/:id
-// ==========================================
-router.put('/:id', editarAluno);
+router.put('/:id', autenticarToken, editarAluno);
 
-// ==========================================
-// EXCLUIR ALUNO
-// DELETE /alunos/:id
-// ==========================================
-router.delete('/:id', excluirAluno);
+router.delete('/:id', autenticarToken, excluirAluno);
 
-// ==========================================
-// VINCULAR ALUNO À TURMA
-// PUT /alunos/:id/turma
-// ==========================================
-router.put('/:id/turma', vincularTurma);
+router.put('/:id/turma', autenticarToken, vincularTurma);
 
 export default router;

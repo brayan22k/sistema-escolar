@@ -36,6 +36,20 @@ function Alunos() {
 
 
     // ==========================================
+    // HEADERS COM TOKEN
+    // ==========================================
+
+    function headersComToken() {
+
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        };
+
+    }
+
+
+    // ==========================================
     // CARREGAR ALUNOS
     // ==========================================
 
@@ -44,13 +58,20 @@ function Alunos() {
         try {
 
             const resposta = await fetch(
-                'http://localhost:3000/alunos'
+                'http://localhost:3000/alunos',
+                {
+                    headers: headersComToken()
+                }
             );
 
             if (!resposta.ok) {
+
+                const erro = await resposta.text();
+
                 throw new Error(
-                    'Erro ao buscar alunos'
+                    erro || 'Erro ao buscar alunos'
                 );
+
             }
 
             const dados = await resposta.json();
@@ -62,6 +83,7 @@ function Alunos() {
             console.error(erro);
 
             setMensagem(
+                erro.message ||
                 'Não foi possível carregar os alunos.'
             );
 
@@ -79,13 +101,20 @@ function Alunos() {
         try {
 
             const resposta = await fetch(
-                'http://localhost:3000/turmas'
+                'http://localhost:3000/turmas',
+                {
+                    headers: headersComToken()
+                }
             );
 
             if (!resposta.ok) {
+
+                const erro = await resposta.text();
+
                 throw new Error(
-                    'Erro ao buscar turmas'
+                    erro || 'Erro ao buscar turmas'
                 );
+
             }
 
             const dados = await resposta.json();
@@ -97,6 +126,7 @@ function Alunos() {
             console.error(erro);
 
             setMensagem(
+                erro.message ||
                 'Não foi possível carregar as turmas.'
             );
 
@@ -316,10 +346,7 @@ function Alunos() {
                     {
                         method: 'PUT',
 
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
+                        headers: headersComToken(),
 
                         body: JSON.stringify(
                             dadosAluno
@@ -341,10 +368,7 @@ function Alunos() {
                     {
                         method: 'POST',
 
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
+                        headers: headersComToken(),
 
                         body: JSON.stringify(
                             dadosAluno
@@ -361,6 +385,7 @@ function Alunos() {
 
             const textoResposta =
                 await resposta.text();
+
 
             console.log(
                 'Resposta do servidor:',
@@ -391,7 +416,7 @@ function Alunos() {
 
             limparFormulario();
 
-            carregarAlunos();
+            await carregarAlunos();
 
 
         } catch (erro) {
@@ -472,7 +497,8 @@ function Alunos() {
                 await fetch(
                     `http://localhost:3000/alunos/${id}`,
                     {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: headersComToken()
                     }
                 );
 
@@ -496,7 +522,7 @@ function Alunos() {
             );
 
 
-            carregarAlunos();
+            await carregarAlunos();
 
 
         } catch (erro) {

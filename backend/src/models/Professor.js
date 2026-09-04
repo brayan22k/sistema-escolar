@@ -18,6 +18,17 @@ Professor.init(
 
         disciplina: {
             type: DataTypes.STRING(100),
+            allowNull: true
+        },
+
+        usuario: {
+            type: DataTypes.STRING(50),
+            allowNull: false,
+            unique: true
+        },
+
+        senha: {
+            type: DataTypes.STRING(255),
             allowNull: false
         }
     },

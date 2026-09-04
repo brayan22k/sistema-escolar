@@ -32,6 +32,21 @@ function Disciplinas() {
 
 
     // ==========================================
+    // TOKEN JWT
+    // ==========================================
+
+    function headersComToken() {
+
+        return {
+            'Content-Type': 'application/json',
+            'Authorization':
+                `Bearer ${localStorage.getItem('token')}`
+        };
+
+    }
+
+
+    // ==========================================
     // CARREGAR DISCIPLINAS
     // ==========================================
 
@@ -40,24 +55,41 @@ function Disciplinas() {
         try {
 
             const resposta = await fetch(
-                'http://localhost:3000/disciplinas'
+                'http://localhost:3000/disciplinas',
+                {
+                    method: 'GET',
+
+                    headers: headersComToken()
+                }
             );
 
+
             if (!resposta.ok) {
+
+                const erro =
+                    await resposta.text();
+
                 throw new Error(
+                    erro ||
                     'Erro ao buscar disciplinas'
                 );
+
             }
 
-            const dados = await resposta.json();
+
+            const dados =
+                await resposta.json();
+
 
             setDisciplinas(dados);
+
 
         } catch (erro) {
 
             console.error(erro);
 
             setMensagem(
+                erro.message ||
                 'Não foi possível carregar as disciplinas.'
             );
 
@@ -111,8 +143,12 @@ function Disciplinas() {
         try {
 
             const dados = {
+
                 nome: nome.trim(),
-                descricao: descricao.trim()
+
+                descricao:
+                    descricao.trim()
+
             };
 
 
@@ -126,16 +162,19 @@ function Disciplinas() {
             if (editandoId !== null) {
 
                 resposta = await fetch(
+
                     `http://localhost:3000/disciplinas/${editandoId}`,
+
                     {
                         method: 'PUT',
 
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers:
+                            headersComToken(),
 
-                        body: JSON.stringify(dados)
+                        body:
+                            JSON.stringify(dados)
                     }
+
                 );
 
             }
@@ -148,16 +187,19 @@ function Disciplinas() {
             else {
 
                 resposta = await fetch(
+
                     'http://localhost:3000/disciplinas',
+
                     {
                         method: 'POST',
 
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers:
+                            headersComToken(),
 
-                        body: JSON.stringify(dados)
+                        body:
+                            JSON.stringify(dados)
                     }
+
                 );
 
             }
@@ -165,23 +207,30 @@ function Disciplinas() {
 
             if (!resposta.ok) {
 
-                const erro = await resposta.text();
+                const erro =
+                    await resposta.text();
 
                 throw new Error(
-                    erro || 'Erro ao salvar disciplina'
+                    erro ||
+                    'Erro ao salvar disciplina'
                 );
 
             }
 
 
             setMensagem(
+
                 editandoId !== null
+
                     ? 'Disciplina atualizada com sucesso!'
+
                     : 'Disciplina cadastrada com sucesso!'
+
             );
 
 
             limparFormulario();
+
 
             await carregarDisciplinas();
 
@@ -191,8 +240,11 @@ function Disciplinas() {
             console.error(erro);
 
             setMensagem(
+
                 erro.message ||
+
                 'Erro ao salvar a disciplina.'
+
             );
 
         }
@@ -210,13 +262,16 @@ function Disciplinas() {
             disciplina.nome || ''
         );
 
+
         setDescricao(
             disciplina.descricao || ''
         );
 
+
         setEditandoId(
             disciplina.id
         );
+
 
         setMensagem('');
 
@@ -229,32 +284,43 @@ function Disciplinas() {
 
     async function excluirDisciplina(id) {
 
-        const confirmar = window.confirm(
-            'Deseja realmente excluir esta disciplina?'
-        );
+        const confirmar =
+            window.confirm(
+                'Deseja realmente excluir esta disciplina?'
+            );
 
 
         if (!confirmar) {
+
             return;
+
         }
 
 
         try {
 
             const resposta = await fetch(
+
                 `http://localhost:3000/disciplinas/${id}`,
+
                 {
-                    method: 'DELETE'
+                    method: 'DELETE',
+
+                    headers:
+                        headersComToken()
                 }
+
             );
 
 
             if (!resposta.ok) {
 
-                const erro = await resposta.text();
+                const erro =
+                    await resposta.text();
 
                 throw new Error(
-                    erro || 'Erro ao excluir disciplina'
+                    erro ||
+                    'Erro ao excluir disciplina'
                 );
 
             }
@@ -273,8 +339,11 @@ function Disciplinas() {
             console.error(erro);
 
             setMensagem(
+
                 erro.message ||
+
                 'Erro ao excluir a disciplina.'
+
             );
 
         }
@@ -321,6 +390,7 @@ function Disciplinas() {
                             ? 'success'
                             : 'error'
                     }
+
                     sx={{
                         mb: 3
                     }}
@@ -350,8 +420,12 @@ function Disciplinas() {
                         }}
                     >
                         {editandoId !== null
+
                             ? 'Editar Disciplina'
-                            : 'Cadastrar Disciplina'}
+
+                            : 'Cadastrar Disciplina'
+
+                        }
                     </Typography>
 
 
@@ -373,13 +447,17 @@ function Disciplinas() {
 
                                 <TextField
                                     fullWidth
+
                                     label="Nome da disciplina"
+
                                     value={nome}
+
                                     onChange={(event) =>
                                         setNome(
                                             event.target.value
                                         )
                                     }
+
                                 />
 
                             </Grid>
@@ -393,13 +471,17 @@ function Disciplinas() {
 
                                 <TextField
                                     fullWidth
+
                                     label="Descrição"
+
                                     value={descricao}
+
                                     onChange={(event) =>
                                         setDescricao(
                                             event.target.value
                                         )
                                     }
+
                                 />
 
                             </Grid>
@@ -413,15 +495,22 @@ function Disciplinas() {
 
                                 <Button
                                     type="submit"
+
                                     variant="contained"
+
                                     fullWidth
+
                                     sx={{
                                         height: '56px'
                                     }}
                                 >
                                     {editandoId !== null
+
                                         ? 'Atualizar'
-                                        : 'Salvar'}
+
+                                        : 'Salvar'
+
+                                    }
                                 </Button>
 
                             </Grid>
@@ -436,7 +525,9 @@ function Disciplinas() {
 
                                     <Button
                                         type="button"
+
                                         variant="outlined"
+
                                         onClick={
                                             limparFormulario
                                         }
@@ -517,61 +608,80 @@ function Disciplinas() {
 
                         ) : (
 
-                            disciplinas.map((disciplina) => (
+                            disciplinas.map(
+                                (disciplina) => (
 
-                                <TableRow
-                                    key={disciplina.id}
-                                >
+                                    <TableRow
+                                        key={
+                                            disciplina.id
+                                        }
+                                    >
 
-                                    <TableCell>
-                                        {disciplina.id}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {disciplina.nome}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {disciplina.descricao ||
-                                            'Sem descrição'}
-                                    </TableCell>
-
-                                    <TableCell>
-
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                                mr: 1
-                                            }}
-                                            onClick={() =>
-                                                editarDisciplina(
-                                                    disciplina
-                                                )
+                                        <TableCell>
+                                            {
+                                                disciplina.id
                                             }
-                                        >
-                                            Editar
-                                        </Button>
+                                        </TableCell>
 
 
-                                        <Button
-                                            size="small"
-                                            color="error"
-                                            variant="outlined"
-                                            onClick={() =>
-                                                excluirDisciplina(
-                                                    disciplina.id
-                                                )
+                                        <TableCell>
+                                            {
+                                                disciplina.nome
                                             }
-                                        >
-                                            Excluir
-                                        </Button>
+                                        </TableCell>
 
-                                    </TableCell>
 
-                                </TableRow>
+                                        <TableCell>
+                                            {
+                                                disciplina.descricao ||
+                                                'Sem descrição'
+                                            }
+                                        </TableCell>
 
-                            ))
+
+                                        <TableCell>
+
+                                            <Button
+                                                size="small"
+
+                                                variant="outlined"
+
+                                                sx={{
+                                                    mr: 1
+                                                }}
+
+                                                onClick={() =>
+                                                    editarDisciplina(
+                                                        disciplina
+                                                    )
+                                                }
+                                            >
+                                                Editar
+                                            </Button>
+
+
+                                            <Button
+                                                size="small"
+
+                                                color="error"
+
+                                                variant="outlined"
+
+                                                onClick={() =>
+                                                    excluirDisciplina(
+                                                        disciplina.id
+                                                    )
+                                                }
+                                            >
+                                                Excluir
+                                            </Button>
+
+                                        </TableCell>
+
+                                    </TableRow>
+
+                                )
+                            )
 
                         )}
 

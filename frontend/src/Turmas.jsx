@@ -74,6 +74,21 @@ function Turma() {
 
 
     // ==================================================
+    // HEADERS COM TOKEN JWT
+    // ==================================================
+
+    function headersComToken() {
+
+        return {
+            'Content-Type': 'application/json',
+            'Authorization':
+                `Bearer ${localStorage.getItem('token')}`
+        };
+
+    }
+
+
+    // ==================================================
     // CARREGAR TURMAS
     // ==================================================
 
@@ -82,7 +97,10 @@ function Turma() {
         try {
 
             const resposta = await fetch(
-                '/api/turmas'
+                '/api/turmas',
+                {
+                    headers: headersComToken()
+                }
             );
 
 
@@ -125,7 +143,10 @@ function Turma() {
         try {
 
             const resposta = await fetch(
-                '/api/alunos'
+                '/api/alunos',
+                {
+                    headers: headersComToken()
+                }
             );
 
 
@@ -265,10 +286,7 @@ function Turma() {
                 {
                     method: 'POST',
 
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
+                    headers: headersComToken(),
 
                     body: JSON.stringify({
 
@@ -388,17 +406,11 @@ function Turma() {
             const valores = [
 
                 turma.id,
-
                 turma.nome,
-
                 turma.serie,
-
                 turma.letra,
-
                 turma.ano,
-
                 turma.professor,
-
                 quantidadeAlunos(
                     turma.id
                 )
@@ -569,10 +581,7 @@ function Turma() {
                 {
                     method: 'PUT',
 
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
+                    headers: headersComToken(),
 
                     body: JSON.stringify({
 
@@ -594,6 +603,7 @@ function Turma() {
                             null
 
                     })
+
                 }
 
             );
@@ -670,7 +680,9 @@ function Turma() {
                 `/api/turmas/${turmaExcluir.id}`,
 
                 {
-                    method: 'DELETE'
+                    method: 'DELETE',
+
+                    headers: headersComToken()
                 }
 
             );

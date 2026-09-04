@@ -2,10 +2,8 @@ import { DataTypes, Model } from 'sequelize';
 
 import sequelize from '../config/database.js';
 
-import Aluno from './Aluno.js';
 
-
-class Nota extends Model { }
+class Nota extends Model {}
 
 
 Nota.init(
@@ -77,28 +75,6 @@ Nota.init(
         ]
     }
 );
-
-
-// ======================================================
-// RELACIONAMENTO
-// NOTA -> ALUNO
-// ======================================================
-
-Nota.belongsTo(Aluno, {
-    foreignKey: 'aluno_id',
-    as: 'aluno'
-});
-
-
-// ======================================================
-// RELACIONAMENTO
-// ALUNO -> NOTAS
-// ======================================================
-
-Aluno.hasMany(Nota, {
-    foreignKey: 'aluno_id',
-    as: 'notas'
-});
 
 
 export default Nota;

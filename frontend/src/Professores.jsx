@@ -18,7 +18,6 @@ import {
     Paper
 } from '@mui/material';
 
-
 function Professores() {
 
     const [professores, setProfessores] = useState([]);
@@ -28,8 +27,21 @@ function Professores() {
     const [disciplina, setDisciplina] = useState('');
 
     const [mensagem, setMensagem] = useState('');
-
     const [editandoId, setEditandoId] = useState(null);
+
+
+    // ==========================================
+    // HEADERS COM TOKEN
+    // ==========================================
+
+    function headersComToken() {
+        const token = localStorage.getItem('token');
+
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
 
 
     // ==========================================
@@ -37,40 +49,44 @@ function Professores() {
     // ==========================================
 
     async function carregarProfessores() {
-
         try {
 
             const resposta = await fetch(
-                'http://localhost:3000/professores'
+                'http://localhost:3000/professores',
+                {
+                    headers: headersComToken()
+                }
             );
+
+            const dados = await resposta.json();
 
             if (!resposta.ok) {
                 throw new Error(
+                    dados.mensagem ||
+                    dados.erro ||
                     'Erro ao buscar professores'
                 );
             }
-
-            const dados = await resposta.json();
 
             setProfessores(dados);
 
         } catch (erro) {
 
-            console.error(erro);
-
-            setMensagem(
-                'Não foi possível carregar os professores.'
+            console.error(
+                'Erro ao carregar professores:',
+                erro
             );
 
+            setMensagem(
+                erro.message ||
+                'Não foi possível carregar os professores.'
+            );
         }
-
     }
 
 
     useEffect(() => {
-
         carregarProfessores();
-
     }, []);
 
 
@@ -83,9 +99,7 @@ function Professores() {
         setNome('');
         setEmail('');
         setDisciplina('');
-
         setEditandoId(null);
-
     }
 
 
@@ -101,110 +115,72 @@ function Professores() {
 
 
         if (!nome.trim()) {
-
             setMensagem(
                 'Digite o nome do professor.'
             );
-
             return;
-
         }
 
 
         if (!email.trim()) {
-
             setMensagem(
                 'Digite o e-mail do professor.'
             );
-
             return;
-
         }
 
 
         if (!disciplina.trim()) {
-
             setMensagem(
                 'Digite a disciplina do professor.'
             );
-
             return;
-
         }
+
+
+        const dadosProfessor = {
+            nome: nome.trim(),
+            email: email.trim(),
+            disciplina: disciplina.trim()
+        };
 
 
         try {
 
-            const dadosProfessor = {
-
-                nome: nome,
-
-                email: email,
-
-                disciplina: disciplina
-
-            };
+            const url = editandoId
+                ? `http://localhost:3000/professores/${editandoId}`
+                : 'http://localhost:3000/professores';
 
 
-            let resposta;
+            const metodo = editandoId
+                ? 'PUT'
+                : 'POST';
 
 
-            // ==================================
-            // EDITAR
-            // ==================================
+            const resposta = await fetch(
+                url,
+                {
+                    method: metodo,
 
-            if (editandoId) {
+                    headers: headersComToken(),
 
-                resposta = await fetch(
-                    `http://localhost:3000/professores/${editandoId}`,
-                    {
-                        method: 'PUT',
-
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
-
-                        body: JSON.stringify(
-                            dadosProfessor
-                        )
-                    }
-                );
-
-            }
+                    body: JSON.stringify(
+                        dadosProfessor
+                    )
+                }
+            );
 
 
-            // ==================================
-            // CADASTRAR
-            // ==================================
-
-            else {
-
-                resposta = await fetch(
-                    'http://localhost:3000/professores',
-                    {
-                        method: 'POST',
-
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
-
-                        body: JSON.stringify(
-                            dadosProfessor
-                        )
-                    }
-                );
-
-            }
+            const dados = await resposta.json();
 
 
             if (!resposta.ok) {
 
                 throw new Error(
+                    dados.mensagem ||
+                    dados.erro ||
                     'Erro ao salvar professor'
                 );
-
             }
 
 
@@ -217,19 +193,21 @@ function Professores() {
 
             limparFormulario();
 
-            carregarProfessores();
+            await carregarProfessores();
 
 
         } catch (erro) {
 
-            console.error(erro);
-
-            setMensagem(
-                'Erro ao salvar o professor.'
+            console.error(
+                'Erro ao salvar professor:',
+                erro
             );
 
+            setMensagem(
+                erro.message ||
+                'Erro ao salvar o professor.'
+            );
         }
-
     }
 
 
@@ -239,18 +217,23 @@ function Professores() {
 
     function editarProfessor(professor) {
 
-        setNome(professor.nome || '');
+        setNome(
+            professor.nome || ''
+        );
 
-        setEmail(professor.email || '');
+        setEmail(
+            professor.email || ''
+        );
 
         setDisciplina(
             professor.disciplina || ''
         );
 
-        setEditandoId(professor.id);
+        setEditandoId(
+            professor.id
+        );
 
         setMensagem('');
-
     }
 
 
@@ -260,10 +243,9 @@ function Professores() {
 
     async function excluirProfessor(id) {
 
-        const confirmar =
-            window.confirm(
-                'Deseja realmente excluir este professor?'
-            );
+        const confirmar = window.confirm(
+            'Deseja realmente excluir este professor?'
+        );
 
 
         if (!confirmar) {
@@ -276,17 +258,22 @@ function Professores() {
             const resposta = await fetch(
                 `http://localhost:3000/professores/${id}`,
                 {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: headersComToken()
                 }
             );
+
+
+            const dados = await resposta.json();
 
 
             if (!resposta.ok) {
 
                 throw new Error(
+                    dados.mensagem ||
+                    dados.erro ||
                     'Erro ao excluir professor'
                 );
-
             }
 
 
@@ -295,24 +282,29 @@ function Professores() {
             );
 
 
-            carregarProfessores();
+            await carregarProfessores();
 
 
         } catch (erro) {
 
-            console.error(erro);
-
-            setMensagem(
-                'Erro ao excluir o professor.'
+            console.error(
+                'Erro ao excluir professor:',
+                erro
             );
 
+            setMensagem(
+                erro.message ||
+                'Erro ao excluir o professor.'
+            );
         }
-
     }
 
 
-    return (
+    // ==========================================
+    // RENDER
+    // ==========================================
 
+    return (
         <Box>
 
             <Typography
@@ -325,50 +317,36 @@ function Professores() {
 
             <Typography
                 color="text.secondary"
-                sx={{
-                    mb: 3
-                }}
+                sx={{ mb: 3 }}
             >
                 Cadastre, edite e consulte os professores
                 da escola.
             </Typography>
 
 
-            {/* MENSAGEM */}
-
             {mensagem && (
-
                 <Alert
                     severity={
                         mensagem.includes('sucesso')
                             ? 'success'
                             : 'error'
                     }
-                    sx={{
-                        mb: 3
-                    }}
+                    sx={{ mb: 3 }}
                 >
                     {mensagem}
                 </Alert>
-
             )}
 
 
             {/* FORMULÁRIO */}
 
-            <Card
-                sx={{
-                    mb: 4
-                }}
-            >
+            <Card sx={{ mb: 4 }}>
 
                 <CardContent>
 
                     <Typography
                         variant="h6"
-                        sx={{
-                            mb: 2
-                        }}
+                        sx={{ mb: 2 }}
                     >
                         {editandoId
                             ? 'Editar Professor'
@@ -455,9 +433,7 @@ function Professores() {
                                 <Button
                                     type="submit"
                                     variant="contained"
-                                    sx={{
-                                        mr: 2
-                                    }}
+                                    sx={{ mr: 2 }}
                                 >
                                     {editandoId
                                         ? 'Atualizar Professor'
@@ -466,7 +442,6 @@ function Professores() {
 
 
                                 {editandoId && (
-
                                     <Button
                                         variant="outlined"
                                         onClick={
@@ -475,7 +450,6 @@ function Professores() {
                                     >
                                         Cancelar
                                     </Button>
-
                                 )}
 
                             </Grid>
@@ -499,9 +473,7 @@ function Professores() {
             </Typography>
 
 
-            <TableContainer
-                component={Paper}
-            >
+            <TableContainer component={Paper}>
 
                 <Table>
 
@@ -522,7 +494,7 @@ function Professores() {
                             </TableCell>
 
                             <TableCell>
-                                <strong>Disciplina</strong>
+                                <strong>Disciplinas</strong>
                             </TableCell>
 
                             <TableCell>
@@ -551,64 +523,102 @@ function Professores() {
 
                         ) : (
 
-                            professores.map((professor) => (
+                            professores.map(
+                                (professor) => (
 
-                                <TableRow
-                                    key={professor.id}
-                                >
+                                    <TableRow
+                                        key={professor.id}
+                                    >
 
-                                    <TableCell>
-                                        {professor.id}
-                                    </TableCell>
+                                        <TableCell>
+                                            {professor.id}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        {professor.nome}
-                                    </TableCell>
 
-                                    <TableCell>
-                                        {professor.email}
-                                    </TableCell>
+                                        <TableCell>
+                                            {professor.nome}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        {professor.disciplina}
-                                    </TableCell>
 
-                                    <TableCell>
+                                        <TableCell>
+                                            {professor.email}
+                                        </TableCell>
 
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                                mr: 1
-                                            }}
-                                            onClick={() =>
-                                                editarProfessor(
-                                                    professor
+
+                                        <TableCell>
+
+                                            {professor.disciplinas &&
+                                            professor.disciplinas.length > 0 ? (
+
+                                                professor.disciplinas.map(
+                                                    (disciplina) => (
+
+                                                        <Typography
+                                                            key={
+                                                                disciplina.id
+                                                            }
+                                                            variant="body2"
+                                                        >
+                                                            {
+                                                                disciplina.nome
+                                                            }
+                                                        </Typography>
+
+                                                    )
                                                 )
-                                            }
-                                        >
-                                            Editar
-                                        </Button>
+
+                                            ) : (
+
+                                                <Typography
+                                                    variant="body2"
+                                                    color="text.secondary"
+                                                >
+                                                    Nenhuma disciplina
+                                                    vinculada
+                                                </Typography>
+
+                                            )}
+
+                                        </TableCell>
 
 
-                                        <Button
-                                            size="small"
-                                            color="error"
-                                            variant="outlined"
-                                            onClick={() =>
-                                                excluirProfessor(
-                                                    professor.id
-                                                )
-                                            }
-                                        >
-                                            Excluir
-                                        </Button>
+                                        <TableCell>
 
-                                    </TableCell>
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{
+                                                    mr: 1
+                                                }}
+                                                onClick={() =>
+                                                    editarProfessor(
+                                                        professor
+                                                    )
+                                                }
+                                            >
+                                                Editar
+                                            </Button>
 
-                                </TableRow>
 
-                            ))
+                                            <Button
+                                                size="small"
+                                                color="error"
+                                                variant="outlined"
+                                                onClick={() =>
+                                                    excluirProfessor(
+                                                        professor.id
+                                                    )
+                                                }
+                                            >
+                                                Excluir
+                                            </Button>
+
+                                        </TableCell>
+
+                                    </TableRow>
+
+                                )
+                            )
 
                         )}
 
@@ -619,10 +629,7 @@ function Professores() {
             </TableContainer>
 
         </Box>
-
     );
-
 }
-
 
 export default Professores;

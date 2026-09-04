@@ -8,47 +8,47 @@ import {
     excluirTurma
 } from '../../controllers/turmaController.js';
 
+import { autenticarToken } from '../../middlewares/authMiddleware.js';
+import { permitirPerfis } from '../../middlewares/perfilMiddleware.js';
+
 const router = express.Router();
 
+// LISTAR TURMAS
+router.get(
+    '/',
+    autenticarToken,
+    listarTurmas
+);
 
-// ======================================================
-// LISTAR TODAS AS TURMAS
-// GET /turmas
-// ======================================================
+// CADASTRAR TURMA - SOMENTE ADMIN
+router.post(
+    '/',
+    autenticarToken,
+    permitirPerfis('admin'),
+    cadastrarTurma
+);
 
-router.get('/', listarTurmas);
+// BUSCAR TURMA
+router.get(
+    '/:id',
+    autenticarToken,
+    buscarTurma
+);
 
+// EDITAR TURMA - SOMENTE ADMIN
+router.put(
+    '/:id',
+    autenticarToken,
+    permitirPerfis('admin'),
+    editarTurma
+);
 
-// ======================================================
-// CADASTRAR TURMA
-// POST /turmas
-// ======================================================
-
-router.post('/', cadastrarTurma);
-
-
-// ======================================================
-// BUSCAR TURMA POR ID
-// GET /turmas/:id
-// ======================================================
-
-router.get('/:id', buscarTurma);
-
-
-// ======================================================
-// EDITAR TURMA
-// PUT /turmas/:id
-// ======================================================
-
-router.put('/:id', editarTurma);
-
-
-// ======================================================
-// EXCLUIR TURMA
-// DELETE /turmas/:id
-// ======================================================
-
-router.delete('/:id', excluirTurma);
-
+// EXCLUIR TURMA - SOMENTE ADMIN
+router.delete(
+    '/:id',
+    autenticarToken,
+    permitirPerfis('admin'),
+    excluirTurma
+);
 
 export default router;

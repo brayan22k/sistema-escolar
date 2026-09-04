@@ -1,111 +1,84 @@
-import Professor from '../models/Professor.js';
+﻿import Professor from '../models/Professor.js';
+import bcrypt from 'bcrypt';
 
-// LISTAR PROFESSORES
-export async function listarProfessores(req, res) {
+async function listarProfessores(req, res) {
     try {
         const professores = await Professor.findAll();
-
-        res.json(professores);
+        res.status(200).json(professores);
     } catch (erro) {
-        console.error('Erro ao listar professores:', erro);
-
-        res.status(500).json({
-            erro: 'Erro ao listar professores',
-            detalhes: erro.message
-        });
+        console.error(erro);
+        res.status(500).json({ mensagem: 'Erro ao listar professores.' });
     }
 }
 
-// CADASTRAR PROFESSOR
-export async function cadastrarProfessor(req, res) {
+async function cadastrarProfessor(req, res) {
     try {
-        const professor = await Professor.create(req.body);
+        const { nome, email, disciplina } = req.body;
 
-        res.status(201).json(professor);
+        if (!nome || !email || !disciplina) {
+            return res.status(400).json({ mensagem: 'Nome, e-mail e disciplina são obrigatórios.' });
+        }
+
+        const usuarioGerado = email.split('@')[0];
+        const senhaPadrao = await bcrypt.hash('mudar123', 10);
+
+        const professor = await Professor.create({
+            nome,
+            email,
+            disciplina,
+            usuario: usuarioGerado,
+            senha: senhaPadrao
+        });
+
+        const professorSemSenha = professor.toJSON();
+        delete professorSemSenha.senha;
+
+        res.status(201).json(professorSemSenha);
     } catch (erro) {
         console.error('Erro ao cadastrar professor:', erro);
-
-        res.status(500).json({
-            erro: 'Erro ao cadastrar professor',
-            detalhes: erro.message
-        });
+        res.status(500).json({ mensagem: 'Erro ao cadastrar professor.', detalhes: erro.message });
     }
 }
 
-// BUSCAR PROFESSOR
-export async function buscarProfessor(req, res) {
+async function atualizarProfessor(req, res) {
     try {
         const { id } = req.params;
-
         const professor = await Professor.findByPk(id);
 
         if (!professor) {
-            return res.status(404).json({
-                erro: 'Professor não encontrado'
-            });
+            return res.status(404).json({ mensagem: 'Professor não encontrado.' });
         }
 
-        res.json(professor);
-    } catch (erro) {
-        console.error('Erro ao buscar professor:', erro);
+        const { nome, email, disciplina } = req.body;
+        await professor.update({ nome, email, disciplina });
 
-        res.status(500).json({
-            erro: 'Erro ao buscar professor',
-            detalhes: erro.message
-        });
+        res.status(200).json(professor);
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ mensagem: 'Erro ao atualizar professor.' });
     }
 }
 
-// EDITAR PROFESSOR
-export async function editarProfessor(req, res) {
+async function excluirProfessor(req, res) {
     try {
         const { id } = req.params;
-
         const professor = await Professor.findByPk(id);
 
         if (!professor) {
-            return res.status(404).json({
-                erro: 'Professor não encontrado'
-            });
-        }
-
-        await professor.update(req.body);
-
-        res.json(professor);
-    } catch (erro) {
-        console.error('Erro ao editar professor:', erro);
-
-        res.status(500).json({
-            erro: 'Erro ao editar professor',
-            detalhes: erro.message
-        });
-    }
-}
-
-// EXCLUIR PROFESSOR
-export async function excluirProfessor(req, res) {
-    try {
-        const { id } = req.params;
-
-        const professor = await Professor.findByPk(id);
-
-        if (!professor) {
-            return res.status(404).json({
-                erro: 'Professor não encontrado'
-            });
+            return res.status(404).json({ mensagem: 'Professor não encontrado.' });
         }
 
         await professor.destroy();
-
-        res.json({
-            mensagem: 'Professor excluído com sucesso!'
-        });
+        res.status(200).json({ mensagem: 'Professor excluído com sucesso.' });
     } catch (erro) {
-        console.error('Erro ao excluir professor:', erro);
-
-        res.status(500).json({
-            erro: 'Erro ao excluir professor',
-            detalhes: erro.message
-        });
+        console.error(erro);
+        res.status(500).json({ mensagem: 'Erro ao excluir professor.' });
     }
 }
+
+export {
+    listarProfessores,
+    cadastrarProfessor,
+    atualizarProfessor,
+    excluirProfessor
+};

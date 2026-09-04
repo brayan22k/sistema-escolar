@@ -23,19 +23,8 @@ import {
 
 
 // ======================================================
-// OPÇÕES FIXAS
+// BIMESTRES
 // ======================================================
-
-const DISCIPLINAS = [
-    'Matemática',
-    'Português',
-    'Front-End',
-    'Back-End',
-    'História',
-    'Geografia',
-    'Ciências',
-    'Inglês'
-];
 
 const BIMESTRES = [
     '1º Bimestre',
@@ -58,18 +47,16 @@ const formularioInicial = {
 
 
 // ======================================================
-// FUNÇÕES DE APOIO
+// CALCULAR MÉDIA
 // ======================================================
 
 function calcularMedia(valores) {
-
     if (!valores || valores.length === 0) {
         return null;
     }
 
     const soma = valores.reduce(
-        (acumulado, valor) =>
-            acumulado + Number(valor),
+        (total, valor) => total + Number(valor),
         0
     );
 
@@ -82,7 +69,6 @@ function calcularMedia(valores) {
 // ======================================================
 
 function situacaoDaMedia(media) {
-
     if (media === null) {
         return {
             texto: 'Sem notas',
@@ -116,19 +102,14 @@ function situacaoDaMedia(media) {
 // ======================================================
 
 function mediaPorDisciplina(notas) {
-
     const grupos = {};
 
     notas.forEach((nota) => {
-
         if (!grupos[nota.disciplina]) {
             grupos[nota.disciplina] = [];
         }
 
-        grupos[nota.disciplina].push(
-            nota.nota
-        );
-
+        grupos[nota.disciplina].push(nota.nota);
     });
 
     return Object.entries(grupos).map(
@@ -146,32 +127,62 @@ function mediaPorDisciplina(notas) {
 
 function Notas() {
 
-    const [form, setForm] = useState(
-        formularioInicial
-    );
+    // ==================================================
+    // ESTADOS
+    // ==================================================
 
+    const [form, setForm] = useState(formularioInicial);
     const [notas, setNotas] = useState([]);
-
     const [alunos, setAlunos] = useState([]);
+    const [disciplinas, setDisciplinas] = useState([]);
 
     const [mensagem, setMensagem] = useState('');
+    const [tipoMensagem, setTipoMensagem] = useState('success');
 
-    const [tipoMensagem, setTipoMensagem] =
-        useState('success');
+    const [alunoConsultaId, setAlunoConsultaId] = useState('');
+    const [alunoConsultaNome, setAlunoConsultaNome] = useState('');
+    const [notasConsulta, setNotasConsulta] = useState([]);
 
 
     // ==================================================
-    // CONSULTA / BOLETIM
+    // TOKEN
     // ==================================================
 
-    const [alunoConsultaId, setAlunoConsultaId] =
-        useState('');
+    function obterToken() {
+        return localStorage.getItem('token');
+    }
 
-    const [alunoConsultaNome, setAlunoConsultaNome] =
-        useState('');
 
-    const [notasConsulta, setNotasConsulta] =
-        useState([]);
+    // ==================================================
+    // HEADERS AUTENTICADOS
+    // ==================================================
+
+    function headersAutenticados() {
+        const token = obterToken();
+
+        return {
+            'Content-Type': 'application/json',
+
+            ...(token
+                ? {
+                    Authorization: `Bearer ${token}`
+                }
+                : {})
+        };
+    }
+
+
+    // ==================================================
+    // MOSTRAR MENSAGEM
+    // ==================================================
+
+    function mostrarMensagem(
+        texto,
+        tipo = 'success'
+    ) {
+        setMensagem(texto);
+        setTipoMensagem(tipo);
+    }
 
 
     // ==================================================
@@ -179,37 +190,39 @@ function Notas() {
     // ==================================================
 
     async function carregarNotas() {
-
         try {
-
             const resposta = await fetch(
-                '/api/notas'
+                '/api/notas',
+                {
+                    headers: headersAutenticados()
+                }
             );
 
             if (!resposta.ok) {
-
                 throw new Error(
-                    'Erro ao carregar notas.'
+                    `Erro ao carregar notas. Status: ${resposta.status}`
                 );
-
             }
 
-            const dados =
-                await resposta.json();
+            const dados = await resposta.json();
 
-            setNotas(dados);
+            setNotas(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
 
         } catch (erro) {
-
-            console.error(erro);
+            console.error(
+                'Erro ao carregar notas:',
+                erro
+            );
 
             mostrarMensagem(
                 erro.message,
                 'error'
             );
-
         }
-
     }
 
 
@@ -218,62 +231,109 @@ function Notas() {
     // ==================================================
 
     async function carregarAlunos() {
-
         try {
-
             const resposta = await fetch(
-                '/api/alunos'
+                '/api/alunos',
+                {
+                    headers: headersAutenticados()
+                }
             );
 
             if (!resposta.ok) {
-
                 throw new Error(
-                    'Erro ao carregar alunos.'
+                    `Erro ao carregar alunos. Status: ${resposta.status}`
+                );
+            }
+
+            const dados = await resposta.json();
+
+            setAlunos(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
+
+        } catch (erro) {
+            console.error(
+                'Erro ao carregar alunos:',
+                erro
+            );
+
+            mostrarMensagem(
+                erro.message,
+                'error'
+            );
+        }
+    }
+
+
+    // ==================================================
+    // CARREGAR DISCIPLINAS
+    // ==================================================
+
+    async function carregarDisciplinas() {
+        try {
+            const resposta = await fetch(
+                'http://localhost:3000/disciplinas',
+                {
+                    method: 'GET',
+                    headers: headersAutenticados()
+                }
+            );
+
+            if (!resposta.ok) {
+                const textoErro =
+                    await resposta.text();
+
+                console.error(
+                    'Resposta da API de disciplinas:',
+                    textoErro
                 );
 
+                throw new Error(
+                    `Erro ao carregar disciplinas. Status: ${resposta.status}`
+                );
             }
 
             const dados =
                 await resposta.json();
 
-            setAlunos(dados);
+            console.log(
+                'DISCIPLINAS CARREGADAS:',
+                dados
+            );
+
+            setDisciplinas(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
 
         } catch (erro) {
+            console.error(
+                'Erro ao carregar disciplinas:',
+                erro
+            );
 
-            console.error(erro);
+            setDisciplinas([]);
 
+            mostrarMensagem(
+                erro.message,
+                'error'
+            );
         }
-
     }
 
 
     // ==================================================
-    // CARREGAR TUDO
+    // CARREGAR DADOS
     // ==================================================
 
     useEffect(() => {
-
         carregarNotas();
-
         carregarAlunos();
-
+        carregarDisciplinas();
     }, []);
-
-
-    // ==================================================
-    // MENSAGEM
-    // ==================================================
-
-    function mostrarMensagem(
-        texto,
-        tipo = 'success'
-    ) {
-
-        setMensagem(texto);
-
-        setTipoMensagem(tipo);
-
-    }
 
 
     // ==================================================
@@ -281,22 +341,17 @@ function Notas() {
     // ==================================================
 
     function handleChange(event) {
-
         const {
             name,
             value
         } = event.target;
 
         setForm(
-            (formularioAnterior) => ({
-
-                ...formularioAnterior,
-
+            (formAnterior) => ({
+                ...formAnterior,
                 [name]: value
-
             })
         );
-
     }
 
 
@@ -305,87 +360,62 @@ function Notas() {
     // ==================================================
 
     async function cadastrarNota(event) {
-
         event.preventDefault();
 
-
         if (!form.aluno_id) {
-
             mostrarMensagem(
                 'Selecione o aluno.',
                 'error'
             );
-
             return;
         }
 
-
         if (!form.disciplina) {
-
             mostrarMensagem(
                 'Selecione a disciplina.',
                 'error'
             );
-
             return;
         }
 
-
         if (!form.bimestre) {
-
             mostrarMensagem(
                 'Selecione o bimestre.',
                 'error'
             );
-
             return;
         }
 
-
         if (form.nota === '') {
-
             mostrarMensagem(
                 'Informe a nota.',
                 'error'
             );
-
             return;
         }
 
-
         const notaNumerica =
             Number(form.nota);
-
 
         if (
             Number.isNaN(notaNumerica) ||
             notaNumerica < 0 ||
             notaNumerica > 10
         ) {
-
             mostrarMensagem(
                 'A nota deve ser um número entre 0 e 10.',
                 'error'
             );
-
             return;
         }
 
-
         try {
-
             const resposta = await fetch(
                 '/api/notas',
                 {
                     method: 'POST',
-
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
-
+                    headers: headersAutenticados(),
                     body: JSON.stringify({
-
                         aluno_id:
                             Number(form.aluno_id),
 
@@ -397,123 +427,128 @@ function Notas() {
 
                         nota:
                             notaNumerica
-
                     })
                 }
             );
 
-
             if (!resposta.ok) {
-
                 const erro =
                     await resposta.text();
 
                 throw new Error(
                     erro ||
-                    'Erro ao salvar nota.'
+                    'Erro ao cadastrar nota.'
                 );
-
             }
-
 
             mostrarMensagem(
                 'Nota cadastrada com sucesso!',
                 'success'
             );
 
+            const alunoIdAtual =
+                form.aluno_id;
 
-            setForm(
-                (formularioAnterior) => ({
-                    ...formularioInicial,
-                    aluno_id:
-                        formularioAnterior.aluno_id
-                })
-            );
-
+            setForm({
+                ...formularioInicial,
+                aluno_id: alunoIdAtual
+            });
 
             await carregarNotas();
-
 
             if (
                 alunoConsultaId &&
                 Number(alunoConsultaId) ===
                 Number(form.aluno_id)
             ) {
-
                 await consultarAluno(
                     alunoConsultaId
                 );
-
             }
 
-
         } catch (erro) {
-
-            console.error(erro);
+            console.error(
+                'Erro ao cadastrar nota:',
+                erro
+            );
 
             mostrarMensagem(
                 erro.message,
                 'error'
             );
-
         }
-
     }
 
 
     // ==================================================
-    // CONSULTAR NOTAS DE UM ALUNO
+    // CONSULTAR ALUNO
     // ==================================================
 
     async function consultarAluno(alunoId) {
-
         if (!alunoId) {
-
             setNotasConsulta([]);
-
             setAlunoConsultaNome('');
-
             return;
         }
 
-
         try {
-
             const resposta = await fetch(
-                `/api/notas/aluno/${alunoId}`
+                `/api/notas/aluno/${alunoId}`,
+                {
+                    headers:
+                        headersAutenticados()
+                }
             );
 
-
             if (!resposta.ok) {
-
                 const erro =
                     await resposta.text();
 
                 throw new Error(
                     erro ||
-                    'Erro ao consultar notas do aluno.'
+                    'Erro ao consultar notas.'
                 );
-
             }
-
 
             const dados =
                 await resposta.json();
 
+            if (dados.notas) {
+                setNotasConsulta(
+                    Array.isArray(dados.notas)
+                        ? dados.notas
+                        : []
+                );
+            } else if (
+                Array.isArray(dados)
+            ) {
+                setNotasConsulta(dados);
+            } else {
+                setNotasConsulta([]);
+            }
 
-            setNotasConsulta(
-                dados.notas
-            );
+            if (dados.aluno) {
+                setAlunoConsultaNome(
+                    dados.aluno.nome
+                );
+            } else {
+                const aluno =
+                    alunos.find(
+                        (item) =>
+                            Number(item.id) ===
+                            Number(alunoId)
+                    );
 
-
-            setAlunoConsultaNome(
-                dados.aluno.nome
-            );
-
+                setAlunoConsultaNome(
+                    aluno?.nome || ''
+                );
+            }
 
         } catch (erro) {
-
-            console.error(erro);
+            console.error(
+                'Erro ao consultar aluno:',
+                erro
+            );
 
             mostrarMensagem(
                 erro.message,
@@ -521,9 +556,7 @@ function Notas() {
             );
 
             setNotasConsulta([]);
-
         }
-
     }
 
 
@@ -532,14 +565,12 @@ function Notas() {
     // ==================================================
 
     function alterarAlunoConsulta(event) {
-
         const novoId =
             event.target.value;
 
         setAlunoConsultaId(novoId);
 
         consultarAluno(novoId);
-
     }
 
 
@@ -548,44 +579,42 @@ function Notas() {
     // ==================================================
 
     function nomeDoAluno(alunoId) {
-
-        const aluno = alunos.find(
-            (item) =>
-                item.id === alunoId
-        );
+        const aluno =
+            alunos.find(
+                (item) =>
+                    Number(item.id) ===
+                    Number(alunoId)
+            );
 
         return aluno
             ? aluno.nome
             : '—';
-
     }
 
 
     // ==================================================
-    // ESTATÍSTICAS DA TURMA
+    // ESTATÍSTICAS
     // ==================================================
 
     const valoresDeTodasAsNotas =
         notas.map(
-            (item) => Number(item.nota)
+            (item) =>
+                Number(item.nota)
         );
 
-
     const maiorNota =
-        valoresDeTodasAsNotas.length
+        valoresDeTodasAsNotas.length > 0
             ? Math.max(
                 ...valoresDeTodasAsNotas
             )
             : null;
 
-
     const menorNota =
-        valoresDeTodasAsNotas.length
+        valoresDeTodasAsNotas.length > 0
             ? Math.min(
                 ...valoresDeTodasAsNotas
             )
             : null;
-
 
     const mediaDaTurma =
         calcularMedia(
@@ -594,16 +623,16 @@ function Notas() {
 
 
     // ==================================================
-    // BOLETIM
+    // MÉDIA GERAL DO ALUNO
     // ==================================================
 
     const mediaGeralAluno =
         calcularMedia(
             notasConsulta.map(
-                (item) => item.nota
+                (item) =>
+                    Number(item.nota)
             )
         );
-
 
     const situacaoAluno =
         situacaoDaMedia(
@@ -612,18 +641,15 @@ function Notas() {
 
 
     // ==================================================
-    // ORGANIZAR NOTAS POR BIMESTRE
+    // NOTAS DO BIMESTRE
     // ==================================================
 
-    function notasDoBimestre(
-        bimestre
-    ) {
-
+    function notasDoBimestre(bimestre) {
         return notasConsulta.filter(
             (nota) =>
-                nota.bimestre === bimestre
+                nota.bimestre ===
+                bimestre
         );
-
     }
 
 
@@ -631,21 +657,16 @@ function Notas() {
     // MÉDIA DO BIMESTRE
     // ==================================================
 
-    function mediaDoBimestre(
-        bimestre
-    ) {
-
+    function mediaDoBimestre(bimestre) {
         const notasBimestre =
-            notasDoBimestre(
-                bimestre
-            );
+            notasDoBimestre(bimestre);
 
         return calcularMedia(
             notasBimestre.map(
-                (item) => item.nota
+                (item) =>
+                    Number(item.nota)
             )
         );
-
     }
 
 
@@ -654,7 +675,6 @@ function Notas() {
     // ==================================================
 
     return (
-
         <Box>
 
             <Typography
@@ -665,38 +685,35 @@ function Notas() {
                 Lançamento de Notas
             </Typography>
 
-
             <Typography
                 color="text.secondary"
                 sx={{ mb: 3 }}
             >
-                Cadastre, consulte e acompanhe o desempenho dos alunos.
+                Cadastre, consulte e acompanhe
+                o desempenho dos alunos.
             </Typography>
 
 
-            {/* ==========================================
+            {/* ==================================================
                 MENSAGEM
-            ========================================== */}
+            ================================================== */}
 
             {mensagem && (
-
                 <Alert
                     severity={tipoMensagem}
                     sx={{ mb: 3 }}
-
                     onClose={() =>
                         setMensagem('')
                     }
                 >
                     {mensagem}
                 </Alert>
-
             )}
 
 
-            {/* ==========================================
+            {/* ==================================================
                 CADASTRO
-            ========================================== */}
+            ================================================== */}
 
             <Card sx={{ mb: 4 }}>
 
@@ -710,7 +727,6 @@ function Notas() {
                         Cadastro de Notas
                     </Typography>
 
-
                     <Box
                         component="form"
                         onSubmit={cadastrarNota}
@@ -721,6 +737,8 @@ function Notas() {
                             spacing={2}
                         >
 
+                            {/* ALUNO */}
+
                             <Grid
                                 item
                                 xs={12}
@@ -731,48 +749,38 @@ function Notas() {
                                     select
                                     fullWidth
                                     required
-
                                     label="Aluno"
-
                                     name="aluno_id"
-
-                                    value={
-                                        form.aluno_id
-                                    }
-
-                                    onChange={
-                                        handleChange
-                                    }
+                                    value={form.aluno_id}
+                                    onChange={handleChange}
                                 >
 
                                     {alunos.map(
                                         (aluno) => (
-
                                             <MenuItem
                                                 key={aluno.id}
                                                 value={aluno.id}
                                             >
                                                 {aluno.nome}
                                             </MenuItem>
-
                                         )
                                     )}
 
                                     {alunos.length === 0 && (
-
                                         <MenuItem
                                             value=""
                                             disabled
                                         >
                                             Nenhum aluno cadastrado
                                         </MenuItem>
-
                                     )}
 
                                 </TextField>
 
                             </Grid>
 
+
+                            {/* DISCIPLINA */}
 
                             <Grid
                                 item
@@ -784,37 +792,56 @@ function Notas() {
                                     select
                                     fullWidth
                                     required
-
                                     label="Disciplina"
-
                                     name="disciplina"
-
-                                    value={
-                                        form.disciplina
-                                    }
-
-                                    onChange={
-                                        handleChange
+                                    value={form.disciplina}
+                                    onChange={handleChange}
+                                    disabled={
+                                        disciplinas.length === 0
                                     }
                                 >
 
-                                    {DISCIPLINAS.map(
-                                        (disciplina) => (
+                                    {disciplinas.map(
+                                        (disciplina) => {
 
-                                            <MenuItem
-                                                key={disciplina}
-                                                value={disciplina}
-                                            >
-                                                {disciplina}
-                                            </MenuItem>
+                                            const nome =
+                                                typeof disciplina ===
+                                                'string'
+                                                    ? disciplina
+                                                    : disciplina.nome;
 
-                                        )
+                                            const id =
+                                                typeof disciplina ===
+                                                'string'
+                                                    ? disciplina
+                                                    : disciplina.id;
+
+                                            return (
+                                                <MenuItem
+                                                    key={id}
+                                                    value={nome}
+                                                >
+                                                    {nome}
+                                                </MenuItem>
+                                            );
+                                        }
+                                    )}
+
+                                    {disciplinas.length === 0 && (
+                                        <MenuItem
+                                            value=""
+                                            disabled
+                                        >
+                                            Nenhuma disciplina cadastrada
+                                        </MenuItem>
                                     )}
 
                                 </TextField>
 
                             </Grid>
 
+
+                            {/* BIMESTRE */}
 
                             <Grid
                                 item
@@ -826,30 +853,20 @@ function Notas() {
                                     select
                                     fullWidth
                                     required
-
                                     label="Bimestre"
-
                                     name="bimestre"
-
-                                    value={
-                                        form.bimestre
-                                    }
-
-                                    onChange={
-                                        handleChange
-                                    }
+                                    value={form.bimestre}
+                                    onChange={handleChange}
                                 >
 
                                     {BIMESTRES.map(
                                         (bimestre) => (
-
                                             <MenuItem
                                                 key={bimestre}
                                                 value={bimestre}
                                             >
                                                 {bimestre}
                                             </MenuItem>
-
                                         )
                                     )}
 
@@ -857,6 +874,8 @@ function Notas() {
 
                             </Grid>
 
+
+                            {/* NOTA */}
 
                             <Grid
                                 item
@@ -867,33 +886,24 @@ function Notas() {
                                 <TextField
                                     fullWidth
                                     required
-
                                     type="number"
-
                                     label="Nota"
-
                                     name="nota"
-
-                                    value={
-                                        form.nota
-                                    }
-
-                                    onChange={
-                                        handleChange
-                                    }
-
+                                    value={form.nota}
+                                    onChange={handleChange}
                                     inputProps={{
                                         min: 0,
                                         max: 10,
                                         step: 0.1
                                     }}
-
                                 />
 
                             </Grid>
 
                         </Grid>
 
+
+                        {/* BOTÕES */}
 
                         <Stack
                             direction="row"
@@ -908,19 +918,15 @@ function Notas() {
                                 Salvar
                             </Button>
 
-
                             <Button
                                 type="button"
                                 variant="outlined"
-
                                 onClick={() => {
-
                                     setForm(
                                         formularioInicial
                                     );
 
                                     setMensagem('');
-
                                 }}
                             >
                                 Limpar
@@ -935,15 +941,17 @@ function Notas() {
             </Card>
 
 
-            {/* ==========================================
+            {/* ==================================================
                 ESTATÍSTICAS
-            ========================================== */}
+            ================================================== */}
 
             <Grid
                 container
                 spacing={2}
                 sx={{ mb: 4 }}
             >
+
+                {/* MAIOR NOTA */}
 
                 <Grid
                     item
@@ -962,7 +970,6 @@ function Notas() {
 
                         <Typography
                             color="text.secondary"
-                            variant="body2"
                         >
                             Maior Nota
                         </Typography>
@@ -982,6 +989,8 @@ function Notas() {
                 </Grid>
 
 
+                {/* MENOR NOTA */}
+
                 <Grid
                     item
                     xs={12}
@@ -999,7 +1008,6 @@ function Notas() {
 
                         <Typography
                             color="text.secondary"
-                            variant="body2"
                         >
                             Menor Nota
                         </Typography>
@@ -1019,6 +1027,8 @@ function Notas() {
                 </Grid>
 
 
+                {/* MÉDIA DA TURMA */}
+
                 <Grid
                     item
                     xs={12}
@@ -1036,7 +1046,6 @@ function Notas() {
 
                         <Typography
                             color="text.secondary"
-                            variant="body2"
                         >
                             Média da Turma
                         </Typography>
@@ -1058,9 +1067,9 @@ function Notas() {
             </Grid>
 
 
-            {/* ==========================================
-                LISTAGEM GERAL
-            ========================================== */}
+            {/* ==================================================
+                NOTAS CADASTRADAS
+            ================================================== */}
 
             <Card sx={{ mb: 4 }}>
 
@@ -1074,7 +1083,6 @@ function Notas() {
                         Notas cadastradas
                     </Typography>
 
-
                     <TableContainer
                         component={Paper}
                         variant="outlined"
@@ -1087,19 +1095,27 @@ function Notas() {
                                 <TableRow>
 
                                     <TableCell>
-                                        <strong>Aluno</strong>
+                                        <strong>
+                                            Aluno
+                                        </strong>
                                     </TableCell>
 
                                     <TableCell>
-                                        <strong>Disciplina</strong>
+                                        <strong>
+                                            Disciplina
+                                        </strong>
                                     </TableCell>
 
                                     <TableCell>
-                                        <strong>Bimestre</strong>
+                                        <strong>
+                                            Bimestre
+                                        </strong>
                                     </TableCell>
 
                                     <TableCell>
-                                        <strong>Nota</strong>
+                                        <strong>
+                                            Nota
+                                        </strong>
                                     </TableCell>
 
                                 </TableRow>
@@ -1111,7 +1127,6 @@ function Notas() {
 
                                 {notas.map(
                                     (item) => (
-
                                         <TableRow
                                             key={item.id}
                                             hover
@@ -1140,13 +1155,11 @@ function Notas() {
                                             </TableCell>
 
                                         </TableRow>
-
                                     )
                                 )}
 
 
                                 {notas.length === 0 && (
-
                                     <TableRow>
 
                                         <TableCell
@@ -1166,7 +1179,6 @@ function Notas() {
                                         </TableCell>
 
                                     </TableRow>
-
                                 )}
 
                             </TableBody>
@@ -1180,9 +1192,9 @@ function Notas() {
             </Card>
 
 
-            {/* ==========================================
-                BOLETIM DO ALUNO
-            ========================================== */}
+            {/* ==================================================
+                BOLETIM
+            ================================================== */}
 
             <Card>
 
@@ -1196,60 +1208,47 @@ function Notas() {
                         Boletim do Aluno
                     </Typography>
 
-
                     <Typography
                         color="text.secondary"
                         sx={{ mb: 3 }}
                     >
-                        Selecione um aluno para ver as notas separadas por bimestre.
+                        Selecione um aluno para ver
+                        as notas separadas por bimestre.
                     </Typography>
 
 
-                    {/* ==================================
-                        SELECIONAR ALUNO
-                    ================================== */}
+                    {/* SELECIONAR ALUNO */}
 
                     <TextField
                         select
                         label="Aluno"
+                        value={alunoConsultaId}
+                        onChange={alterarAlunoConsulta}
                         sx={{
                             minWidth: 260,
                             mb: 3
                         }}
-
-                        value={
-                            alunoConsultaId
-                        }
-
-                        onChange={
-                            alterarAlunoConsulta
-                        }
                     >
 
                         <MenuItem value="">
                             Selecione...
                         </MenuItem>
 
-
                         {alunos.map(
                             (aluno) => (
-
                                 <MenuItem
                                     key={aluno.id}
                                     value={aluno.id}
                                 >
                                     {aluno.nome}
                                 </MenuItem>
-
                             )
                         )}
 
                     </TextField>
 
 
-                    {/* ==================================
-                        BOLETIM
-                    ================================== */}
+                    {/* BOLETIM */}
 
                     {alunoConsultaId && (
 
@@ -1266,25 +1265,25 @@ function Notas() {
                                 fontWeight="bold"
                                 sx={{ mb: 3 }}
                             >
-                                Aluno: {alunoConsultaNome}
+                                Aluno:{' '}
+                                {alunoConsultaNome}
                             </Typography>
 
+
+                            {/* SEM NOTAS */}
 
                             {notasConsulta.length === 0 ? (
 
                                 <Typography
                                     color="text.secondary"
                                 >
-                                    Este aluno ainda não tem notas lançadas.
+                                    Este aluno ainda não
+                                    tem notas lançadas.
                                 </Typography>
 
                             ) : (
 
                                 <>
-
-                                    {/* ==================================
-                                        BIMESTRES
-                                    ================================== */}
 
                                     <Stack spacing={3}>
 
@@ -1301,9 +1300,7 @@ function Notas() {
                                                         bimestre
                                                     );
 
-
                                                 return (
-
                                                     <Paper
                                                         key={bimestre}
                                                         variant="outlined"
@@ -1312,8 +1309,6 @@ function Notas() {
                                                             borderRadius: 2
                                                         }}
                                                     >
-
-                                                        {/* TÍTULO */}
 
                                                         <Box
                                                             sx={{
@@ -1332,10 +1327,13 @@ function Notas() {
                                                             </Typography>
 
 
-                                                            {mediaBimestre !== null && (
+                                                            {mediaBimestre !==
+                                                                null && (
 
                                                                 <Chip
-                                                                    label={`Média: ${mediaBimestre.toFixed(2)}`}
+                                                                    label={
+                                                                        `Média: ${mediaBimestre.toFixed(2)}`
+                                                                    }
                                                                     color={
                                                                         mediaBimestre >= 6
                                                                             ? 'success'
@@ -1344,7 +1342,8 @@ function Notas() {
                                                                                 : 'error'
                                                                     }
                                                                     sx={{
-                                                                        fontWeight: 'bold'
+                                                                        fontWeight:
+                                                                            'bold'
                                                                     }}
                                                                 />
 
@@ -1353,9 +1352,10 @@ function Notas() {
                                                         </Box>
 
 
-                                                        {/* NOTAS */}
+                                                        {/* NOTAS DO BIMESTRE */}
 
-                                                        {notasBimestre.length === 0 ? (
+                                                        {notasBimestre.length ===
+                                                        0 ? (
 
                                                             <Typography
                                                                 color="text.secondary"
@@ -1375,7 +1375,9 @@ function Notas() {
                                                                     (item) => (
 
                                                                         <Box
-                                                                            key={item.disciplina}
+                                                                            key={
+                                                                                item.disciplina
+                                                                            }
                                                                             sx={{
                                                                                 display: 'flex',
                                                                                 justifyContent: 'space-between',
@@ -1386,14 +1388,20 @@ function Notas() {
                                                                         >
 
                                                                             <Typography>
-                                                                                {item.disciplina}
+                                                                                {
+                                                                                    item.disciplina
+                                                                                }
                                                                             </Typography>
-
 
                                                                             <Typography
                                                                                 fontWeight={600}
                                                                             >
-                                                                                {item.media.toFixed(1)}
+                                                                                {
+                                                                                    item.media !==
+                                                                                    null
+                                                                                        ? item.media.toFixed(1)
+                                                                                        : '—'
+                                                                                }
                                                                             </Typography>
 
                                                                         </Box>
@@ -1406,24 +1414,23 @@ function Notas() {
                                                         )}
 
                                                     </Paper>
-
                                                 );
-
                                             }
                                         )}
 
                                     </Stack>
 
 
-                                    {/* ==================================
+                                    {/* ==================================================
                                         MÉDIA GERAL
-                                    ================================== */}
+                                    ================================================== */}
 
                                     <Box
                                         sx={{
                                             mt: 3,
                                             pt: 2,
-                                            borderTop: '2px solid #333'
+                                            borderTop:
+                                                '2px solid #333'
                                         }}
                                     >
 
@@ -1439,7 +1446,8 @@ function Notas() {
                                             >
                                                 Média Geral:{' '}
 
-                                                {mediaGeralAluno !== null
+                                                {mediaGeralAluno !==
+                                                null
                                                     ? mediaGeralAluno.toFixed(2)
                                                     : '—'}
                                             </Typography>
@@ -1453,7 +1461,8 @@ function Notas() {
                                                     situacaoAluno.cor
                                                 }
                                                 sx={{
-                                                    fontWeight: 'bold'
+                                                    fontWeight:
+                                                        'bold'
                                                 }}
                                             />
 
@@ -1474,10 +1483,12 @@ function Notas() {
             </Card>
 
         </Box>
-
     );
-
 }
 
+
+// ======================================================
+// EXPORTAÇÃO
+// ======================================================
 
 export default Notas;

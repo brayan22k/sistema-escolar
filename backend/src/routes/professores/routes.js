@@ -1,25 +1,38 @@
-import express from 'express';
+﻿import express from 'express';
 
 import {
     listarProfessores,
     cadastrarProfessor,
-    buscarProfessor,
-    editarProfessor,
+    atualizarProfessor,
     excluirProfessor
 } from '../../controllers/professorController.js';
 
+import { autenticarToken } from '../../middlewares/authMiddleware.js';
+import { permitirPerfis } from '../../middlewares/perfilMiddleware.js';
+
 const router = express.Router();
 
-console.log('ARQUIVO PROFESSORES ROUTES FOI CARREGADO');
+router.get('/', autenticarToken, listarProfessores);
 
-router.get('/', listarProfessores);
+router.post(
+    '/',
+    autenticarToken,
+    permitirPerfis('admin'),
+    cadastrarProfessor
+);
 
-router.post('/', cadastrarProfessor);
+router.put(
+    '/:id',
+    autenticarToken,
+    permitirPerfis('admin'),
+    atualizarProfessor
+);
 
-router.get('/:id', buscarProfessor);
-
-router.put('/:id', editarProfessor);
-
-router.delete('/:id', excluirProfessor);
+router.delete(
+    '/:id',
+    autenticarToken,
+    permitirPerfis('admin'),
+    excluirProfessor
+);
 
 export default router;

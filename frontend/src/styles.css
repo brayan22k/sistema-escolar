@@ -1,0 +1,753 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color: #ffffff;
+  background: #080808;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* =====================================================
+   BASE
+===================================================== */
+
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      #252525 0%,
+      #101010 35%,
+      #050505 100%
+    );
+
+  color: #ffffff !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+
+/* =====================================================
+   TEXTOS
+===================================================== */
+
+body {
+  color: #ffffff !important;
+}
+
+.MuiTypography-root {
+  color: #ffffff !important;
+}
+
+.MuiTypography-body1,
+.MuiTypography-body2,
+.MuiTypography-caption,
+.MuiTypography-overline,
+.MuiTypography-subtitle1,
+.MuiTypography-subtitle2 {
+  color: #ffffff !important;
+}
+
+.MuiTypography-h1,
+.MuiTypography-h2,
+.MuiTypography-h3,
+.MuiTypography-h4,
+.MuiTypography-h5,
+.MuiTypography-h6 {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   CARDS
+===================================================== */
+
+.MuiCard-root {
+  position: relative;
+  overflow: hidden;
+
+  background: linear-gradient(
+    145deg,
+    #1c1c1c,
+    #0e0e0e
+  ) !important;
+
+  color: #ffffff !important;
+
+  border: 1px solid #333333 !important;
+
+  border-radius: 14px !important;
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.60);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+
+/* =====================================================
+   BRILHO ANIMADO DOS CARDS
+===================================================== */
+
+.MuiCard-root::before {
+  content: '';
+
+  position: absolute;
+
+  top: -150%;
+  left: -150%;
+
+  width: 300%;
+  height: 300%;
+
+  background: linear-gradient(
+    120deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.03) 43%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.03) 57%,
+    transparent 65%
+  );
+
+  transform: rotate(25deg);
+
+  animation: brilhoCard 5s linear infinite;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+@keyframes brilhoCard {
+
+  0% {
+    transform: translateX(-50%) rotate(25deg);
+  }
+
+  100% {
+    transform: translateX(50%) rotate(25deg);
+  }
+
+}
+
+
+/* =====================================================
+   HOVER DOS CARDS
+===================================================== */
+
+.MuiCard-root:hover {
+  transform: translateY(-5px);
+
+  border-color: #777777 !important;
+
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.15),
+    0 0 25px rgba(255, 255, 255, 0.10),
+    0 12px 35px rgba(0, 0, 0, 0.80);
+}
+
+
+/* =====================================================
+   CONTEÚDO DOS CARDS
+===================================================== */
+
+.MuiCardContent-root {
+  position: relative;
+  z-index: 1;
+
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   PAPER
+   CORREÇÃO DOS QUADROS DE NOTAS
+===================================================== */
+
+.MuiPaper-root {
+  background: #151515 !important;
+
+  color: #ffffff !important;
+
+  border-color: #363636 !important;
+
+  box-shadow:
+    0 5px 18px rgba(0, 0, 0, 0.35);
+}
+
+
+/* Paper dentro da área de notas */
+
+.MuiPaper-outlined {
+  background: linear-gradient(
+    145deg,
+    #1b1b1b,
+    #101010
+  ) !important;
+
+  border: 1px solid #383838 !important;
+
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   QUADROS MAIOR / MENOR / MÉDIA
+===================================================== */
+
+.MuiGrid-container .MuiPaper-root {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+
+.MuiGrid-container .MuiPaper-root:hover {
+  transform: translateY(-4px);
+
+  border-color: #666666 !important;
+
+  box-shadow:
+    0 0 15px rgba(255, 255, 255, 0.08),
+    0 10px 25px rgba(0, 0, 0, 0.65);
+}
+
+
+/* =====================================================
+   MAIOR NOTA
+   VERDE
+===================================================== */
+
+.MuiTypography-root.MuiTypography-h4[color="success"] {
+  color: #4caf50 !important;
+}
+
+.MuiTypography-root[color="success.main"] {
+  color: #4caf50 !important;
+}
+
+
+/* =====================================================
+   MENOR NOTA
+   VERMELHO
+===================================================== */
+
+.MuiTypography-root.MuiTypography-h4[color="error"] {
+  color: #f44336 !important;
+}
+
+.MuiTypography-root[color="error.main"] {
+  color: #f44336 !important;
+}
+
+
+/* =====================================================
+   MÉDIA DA TURMA
+   AZUL
+===================================================== */
+
+.MuiTypography-root.MuiTypography-h4[color="primary"] {
+  color: #42a5f5 !important;
+}
+
+.MuiTypography-root[color="primary.main"] {
+  color: #42a5f5 !important;
+}
+
+
+/* =====================================================
+   TEXTO SECUNDÁRIO
+===================================================== */
+
+.MuiTypography-root[color="text.secondary"] {
+  color: #bdbdbd !important;
+}
+
+
+/* =====================================================
+   BARRA SUPERIOR
+===================================================== */
+
+.MuiAppBar-root {
+  background: linear-gradient(
+    90deg,
+    #050505,
+    #181818,
+    #080808
+  ) !important;
+
+  color: #ffffff !important;
+
+  box-shadow:
+    0 2px 15px rgba(0, 0, 0, 0.75) !important;
+
+  border-bottom: 1px solid #303030;
+}
+
+.MuiAppBar-root * {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   MENU LATERAL
+===================================================== */
+
+.MuiDrawer-paper {
+  background: linear-gradient(
+    180deg,
+    #090909,
+    #161616
+  ) !important;
+
+  color: #ffffff !important;
+
+  border-right: 1px solid #303030 !important;
+
+  box-shadow:
+    5px 0 20px rgba(0, 0, 0, 0.40);
+}
+
+.MuiDrawer-paper * {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   ITENS DO MENU
+===================================================== */
+
+.MuiListItemButton-root {
+  margin: 4px 8px;
+
+  border-radius: 8px;
+
+  color: #ffffff !important;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.MuiListItemButton-root * {
+  color: #ffffff !important;
+}
+
+
+.MuiListItemButton-root:hover {
+  background: #292929 !important;
+
+  transform: translateX(2px);
+
+  box-shadow:
+    inset 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+
+.MuiListItemButton-root.Mui-selected {
+  background: linear-gradient(
+    90deg,
+    #383838,
+    #1b1b1b
+  ) !important;
+
+  box-shadow:
+    inset 3px 0 0 #ffffff,
+    0 0 12px rgba(255, 255, 255, 0.07);
+}
+
+
+.MuiListItemButton-root.Mui-selected:hover {
+  background: #424242 !important;
+}
+
+
+/* =====================================================
+   TEXTO DO MENU
+===================================================== */
+
+.MuiListItemText-root {
+  color: #ffffff !important;
+}
+
+.MuiListItemText-primary {
+  color: #ffffff !important;
+}
+
+.MuiListItemText-secondary {
+  color: #d0d0d0 !important;
+}
+
+
+/* =====================================================
+   BOTÕES
+===================================================== */
+
+.MuiButton-root {
+  color: #ffffff !important;
+}
+
+
+.MuiButton-contained {
+  background: linear-gradient(
+    135deg,
+    #414141,
+    #171717
+  ) !important;
+
+  color: #ffffff !important;
+
+  border: 1px solid #5a5a5a;
+
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.55);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+
+.MuiButton-contained:hover {
+  background: linear-gradient(
+    135deg,
+    #5a5a5a,
+    #242424
+  ) !important;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 0 15px rgba(255, 255, 255, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.65);
+}
+
+
+.MuiButton-outlined {
+  color: #ffffff !important;
+
+  border-color: #666666 !important;
+}
+
+
+.MuiButton-outlined:hover {
+  background: #252525 !important;
+
+  border-color: #aaaaaa !important;
+}
+
+
+/* =====================================================
+   CAMPOS DE TEXTO
+===================================================== */
+
+.MuiTextField-root {
+  color: #ffffff !important;
+}
+
+
+.MuiOutlinedInput-root {
+  color: #ffffff !important;
+
+  background: #151515 !important;
+}
+
+
+.MuiOutlinedInput-root input {
+  color: #ffffff !important;
+
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: #444444 !important;
+}
+
+
+.MuiOutlinedInput-root:hover
+.MuiOutlinedInput-notchedOutline {
+  border-color: #777777 !important;
+}
+
+
+.MuiOutlinedInput-root.Mui-focused
+.MuiOutlinedInput-notchedOutline {
+  border-color: #aaaaaa !important;
+}
+
+
+.MuiInputLabel-root {
+  color: #ffffff !important;
+}
+
+
+.MuiInputLabel-root.Mui-focused {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+.MuiInputBase-root {
+  color: #ffffff !important;
+}
+
+
+.MuiInputBase-input {
+  color: #ffffff !important;
+
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+
+.MuiInputBase-input::placeholder {
+  color: #bdbdbd !important;
+
+  opacity: 1 !important;
+}
+
+
+/* =====================================================
+   SELECT
+===================================================== */
+
+.MuiSelect-select {
+  color: #ffffff !important;
+}
+
+
+.MuiSelect-icon {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   DROPDOWN
+===================================================== */
+
+.MuiMenu-paper {
+  background: #171717 !important;
+
+  border: 1px solid #333333 !important;
+}
+
+
+.MuiMenuItem-root {
+  color: #ffffff !important;
+}
+
+
+.MuiMenuItem-root:hover {
+  background: #292929 !important;
+}
+
+
+/* =====================================================
+   TABELAS
+===================================================== */
+
+.MuiTableContainer-root {
+  background: #111111 !important;
+
+  border: 1px solid #303030;
+
+  border-radius: 12px;
+
+  color: #ffffff !important;
+}
+
+
+.MuiTable-root {
+  background: transparent !important;
+
+  color: #ffffff !important;
+}
+
+
+.MuiTableCell-root {
+  color: #ffffff !important;
+
+  border-bottom: 1px solid #303030 !important;
+}
+
+
+.MuiTableHead-root {
+  background: #1c1c1c !important;
+}
+
+
+.MuiTableBody-root {
+  background: #111111 !important;
+}
+
+
+.MuiTableRow-root:hover {
+  background: #202020 !important;
+}
+
+
+/* =====================================================
+   ALERTAS
+===================================================== */
+
+.MuiAlert-root {
+  background: #1c1c1c !important;
+
+  color: #ffffff !important;
+
+  border: 1px solid #3a3a3a;
+}
+
+.MuiAlert-root * {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   CHIPS - SITUAÇÃO DO ALUNO
+===================================================== */
+
+/* APROVADO */
+
+.MuiChip-colorSuccess {
+  background-color: #2e7d32 !important;
+
+  color: #ffffff !important;
+}
+
+.MuiChip-colorSuccess .MuiChip-label {
+  color: #ffffff !important;
+}
+
+
+/* RECUPERAÇÃO */
+
+.MuiChip-colorWarning {
+  background-color: #ed6c02 !important;
+
+  color: #ffffff !important;
+}
+
+.MuiChip-colorWarning .MuiChip-label {
+  color: #ffffff !important;
+}
+
+
+/* REPROVADO */
+
+.MuiChip-colorError {
+  background-color: #d32f2f !important;
+
+  color: #ffffff !important;
+}
+
+.MuiChip-colorError .MuiChip-label {
+  color: #ffffff !important;
+}
+
+
+/* SEM NOTAS */
+
+.MuiChip-colorDefault {
+  background-color: #616161 !important;
+
+  color: #ffffff !important;
+}
+
+.MuiChip-colorDefault .MuiChip-label {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   ÍCONES
+===================================================== */
+
+.MuiSvgIcon-root {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   LINKS
+===================================================== */
+
+a {
+  color: #ffffff !important;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+::placeholder {
+  color: #bdbdbd !important;
+
+  opacity: 1 !important;
+}
+
+
+/* =====================================================
+   SELEÇÃO
+===================================================== */
+
+::selection {
+  background: #555555;
+
+  color: #ffffff;
+}
+
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+
+::-webkit-scrollbar-track {
+  background: #080808;
+}
+
+
+::-webkit-scrollbar-thumb {
+  background: #3d3d3d;
+
+  border-radius: 10px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}

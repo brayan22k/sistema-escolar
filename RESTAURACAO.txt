@@ -1,0 +1,8 @@
+Restauração preparada a partir do projeto enviado.
+- Frontend restaurado para visual preto/branco e estrutura de painel.
+- Login JWT integrado ao /auth/me.
+- Rotas backend normalizadas para evitar /alunos/alunos e similares.
+- Proteção JWT aplicada às rotas principais.
+- Dependências bcrypt/jsonwebtoken adicionadas ao backend/package.json.
+- Frontend ajustado para usar http://localhost:3000 e enviar Bearer token.
+- Notas preparado para carregar disciplinas do banco.

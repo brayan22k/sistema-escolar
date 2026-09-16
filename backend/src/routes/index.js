@@ -8,18 +8,46 @@ import professorDisciplinaRoutes from './professorDisciplina/routes.js';
 import disciplinasRoutes from './disciplina/routes.js';
 import authRoutes from './auth/routes.js';
 
+// ======================================================
+// AUDITORIA
+// ======================================================
+import auditoriaRoutes from '../auditoria/routes.js';
+
 const routes = express.Router();
 
+// ======================================================
+// ROTAS PRINCIPAIS
+// ======================================================
+
 routes.use('/alunos', alunosRoutes);
+
 routes.use('/turmas', turmasRoutes);
+
 routes.use('/notas', notasRoutes);
+
 routes.use('/professores', professoresRoutes);
+
 routes.use('/professores', professorDisciplinaRoutes);
+
 routes.use('/disciplinas', disciplinasRoutes);
+
 routes.use('/auth', authRoutes);
 
+// ======================================================
+// AUDITORIA
+// ======================================================
+
+routes.use('/auditoria', auditoriaRoutes);
+
+// ======================================================
+// LOGS
+// ======================================================
+
+console.log('======================================');
 console.log('ROTAS PRINCIPAIS CARREGADAS');
 console.log('ROTA /auth REGISTRADA');
 console.log('ROTA /professores REGISTRADA');
+console.log('ROTA /auditoria REGISTRADA');
+console.log('======================================');
 
 export default routes;

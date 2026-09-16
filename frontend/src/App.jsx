@@ -21,9 +21,13 @@ import Professores from './Professores.jsx';
 import Turmas from './Turmas.jsx';
 import Disciplinas from './Disciplinas.jsx';
 import Notas from './Notas.jsx';
+import Auditoria from './Auditoria.jsx';
+
 
 const API_URL = 'http://localhost:3000';
+
 const drawerWidth = 240;
+
 
 const menuItems = [
     {
@@ -32,100 +36,151 @@ const menuItems = [
         description: 'Visão geral do sistema',
         perfis: ['admin', 'professor', 'aluno']
     },
+
     {
         key: 'alunos',
         label: 'Alunos',
         description: 'Cadastro e consulta de estudantes',
         perfis: ['admin', 'professor']
     },
+
     {
         key: 'professores',
         label: 'Professores',
         description: 'Gestão da equipe',
         perfis: ['admin']
     },
+
     {
         key: 'turmas',
         label: 'Turmas',
         description: 'Organização escolar',
         perfis: ['admin', 'professor']
     },
+
     {
         key: 'disciplinas',
         label: 'Disciplinas',
         description: 'Cadastro de disciplinas',
         perfis: ['admin', 'professor']
     },
+
     {
         key: 'notas',
         label: 'Notas',
         description: 'Lançamento e boletim dos alunos',
         perfis: ['admin', 'professor', 'aluno']
     },
+
     {
         key: 'financeiro',
         label: 'Financeiro',
         description: 'Mensalidades e contas',
         perfis: ['admin']
     },
+
     {
         key: 'relatorios',
         label: 'Relatórios',
         description: 'Relatórios do sistema',
         perfis: ['admin', 'professor']
+    },
+
+    {
+        key: 'auditoria',
+        label: 'Auditoria',
+        description: 'Histórico de operações do sistema',
+        perfis: ['admin']
     }
 ];
+
 
 function obterUsuarioSalvo() {
     try {
         const valor = localStorage.getItem('usuarioLogado');
-        return valor ? JSON.parse(valor) : null;
+
+        return valor
+            ? JSON.parse(valor)
+            : null;
+
     } catch {
         return null;
     }
 }
 
+
 function obterToken() {
     return localStorage.getItem('token');
 }
+
 
 function limparSessao() {
     localStorage.removeItem('token');
     localStorage.removeItem('usuarioLogado');
 }
 
+
 function App() {
-    const [usuario, setUsuario] = useState(() => obterUsuarioSalvo());
-    const [view, setView] = useState('inicio');
-    const [validandoSessao, setValidandoSessao] = useState(
-        () => Boolean(obterToken())
+
+    const [usuario, setUsuario] = useState(
+        () => obterUsuarioSalvo()
     );
+
+
+    const [view, setView] = useState('inicio');
+
+
+    const [validandoSessao, setValidandoSessao] =
+        useState(
+            () => Boolean(obterToken())
+        );
+
 
     const token = obterToken();
 
+
     useEffect(() => {
+
         let ativo = true;
 
+
         async function validarSessao() {
-            const tokenAtual = obterToken();
+
+            const tokenAtual =
+                obterToken();
+
 
             if (!tokenAtual) {
+
                 if (ativo) {
+
                     setValidandoSessao(false);
                     setUsuario(null);
+
                 }
+
                 return;
             }
 
+
             try {
-                const resposta = await fetch(`${API_URL}/auth/me`, {
-                    headers: {
-                        Authorization: `Bearer ${tokenAtual}`
-                    }
-                });
+
+                const resposta =
+                    await fetch(
+                        `${API_URL}/auth/me`,
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${tokenAtual}`
+                            }
+                        }
+                    );
+
 
                 if (!resposta.ok) {
+
                     limparSessao();
+
 
                     if (ativo) {
                         setUsuario(null);
@@ -134,151 +189,303 @@ function App() {
                     return;
                 }
 
-                const dados = await resposta.json();
 
-                if (ativo && dados.usuario) {
-                    setUsuario(dados.usuario);
+                const dados =
+                    await resposta.json();
+
+
+                if (
+                    ativo &&
+                    dados.usuario
+                ) {
+
+                    setUsuario(
+                        dados.usuario
+                    );
+
+
                     localStorage.setItem(
                         'usuarioLogado',
-                        JSON.stringify(dados.usuario)
+                        JSON.stringify(
+                            dados.usuario
+                        )
                     );
                 }
+
+
             } catch (erro) {
-                console.error('Erro ao validar sessão:', erro);
+
+                console.error(
+                    'Erro ao validar sessão:',
+                    erro
+                );
+
+
             } finally {
+
                 if (ativo) {
+
                     setValidandoSessao(false);
+
                 }
+
             }
+
         }
+
 
         validarSessao();
 
+
         return () => {
+
             ativo = false;
+
         };
+
     }, []);
 
-    const menuPermitido = useMemo(() => {
-        if (!usuario?.perfil) {
-            return [];
-        }
 
-        return menuItems.filter((item) =>
-            item.perfis.includes(usuario.perfil)
-        );
-    }, [usuario]);
+    const menuPermitido =
+        useMemo(() => {
+
+            if (!usuario?.perfil) {
+
+                return [];
+
+            }
+
+
+            return menuItems.filter(
+                (item) =>
+                    item.perfis.includes(
+                        usuario.perfil
+                    )
+            );
+
+        }, [usuario]);
+
 
     useEffect(() => {
+
         if (!usuario) {
+
             return;
+
         }
 
-        const aindaPermitido = menuPermitido.some(
-            (item) => item.key === view
-        );
+
+        const aindaPermitido =
+            menuPermitido.some(
+                (item) =>
+                    item.key === view
+            );
+
 
         if (!aindaPermitido) {
+
             setView('inicio');
+
         }
-    }, [usuario, menuPermitido, view]);
+
+    }, [
+        usuario,
+        menuPermitido,
+        view
+    ]);
+
 
     function handleLogin(usuarioLogado) {
+
         if (!usuarioLogado) {
+
             return;
+
         }
 
-        setUsuario(usuarioLogado);
+
+        setUsuario(
+            usuarioLogado
+        );
+
+
         setView('inicio');
+
+
         setValidandoSessao(false);
+
     }
+
 
     function handleLogout() {
+
         limparSessao();
+
         setUsuario(null);
+
         setView('inicio');
+
     }
 
+
     function renderConteudo() {
+
         switch (view) {
+
             case 'alunos':
+
                 return <Alunos />;
 
+
             case 'professores':
+
                 return <Professores />;
 
+
             case 'turmas':
+
                 return <Turmas />;
 
+
             case 'disciplinas':
+
                 return <Disciplinas />;
 
+
             case 'notas':
+
                 return <Notas />;
 
+
+            case 'auditoria':
+
+                return <Auditoria />;
+
+
             case 'financeiro':
+
                 return (
+
                     <Box>
-                        <Typography variant="h5" gutterBottom>
+
+                        <Typography
+                            variant="h5"
+                            gutterBottom
+                        >
                             Financeiro
                         </Typography>
+
 
                         <Typography>
                             Área financeira do sistema escolar.
                         </Typography>
+
                     </Box>
+
                 );
 
+
             case 'relatorios':
+
                 return (
+
                     <Box>
-                        <Typography variant="h5" gutterBottom>
+
+                        <Typography
+                            variant="h5"
+                            gutterBottom
+                        >
                             Relatórios
                         </Typography>
+
 
                         <Typography>
                             Relatórios do sistema escolar.
                         </Typography>
+
                     </Box>
+
                 );
 
+
             case 'inicio':
+
             default:
+
                 return (
+
                     <Box>
-                        <Typography variant="h4" gutterBottom>
+
+                        <Typography
+                            variant="h4"
+                            gutterBottom
+                        >
                             Sistema Escolar
                         </Typography>
 
-                        <Typography sx={{ mb: 1 }}>
-                            Bem-vindo ao sistema de gerenciamento escolar.
+
+                        <Typography
+                            sx={{ mb: 1 }}
+                        >
+                            Bem-vindo ao sistema de
+                            gerenciamento escolar.
                         </Typography>
 
+
                         {usuario && (
-                            <Typography sx={{ mb: 3 }}>
-                                Usuário: <strong>{usuario.nome}</strong> —{' '}
-                                Perfil: <strong>{usuario.perfil}</strong>
+
+                            <Typography
+                                sx={{ mb: 3 }}
+                            >
+
+                                Usuário:{' '}
+
+                                <strong>
+                                    {usuario.nome}
+                                </strong>
+
+                                {' — '}
+
+                                Perfil:{' '}
+
+                                <strong>
+                                    {usuario.perfil}
+                                </strong>
+
                             </Typography>
+
                         )}
+
 
                         <Button
                             variant="contained"
-                            onClick={() => setView('alunos')}
+                            onClick={() =>
+                                setView('alunos')
+                            }
                             disabled={
                                 !menuPermitido.some(
-                                    (item) => item.key === 'alunos'
+                                    (item) =>
+                                        item.key ===
+                                        'alunos'
                                 )
                             }
                         >
                             Acessar Alunos
                         </Button>
+
                     </Box>
+
                 );
+
         }
+
     }
 
+
     if (validandoSessao) {
+
         return (
+
             <Box
                 sx={{
                     minHeight: '100vh',
@@ -287,37 +494,58 @@ function App() {
                     justifyContent: 'center'
                 }}
             >
-                <Typography>Validando sessão...</Typography>
+
+                <Typography>
+                    Validando sessão...
+                </Typography>
+
             </Box>
+
         );
+
     }
+
 
     if (!token || !usuario) {
-        return <Login onLogin={handleLogin} />;
+
+        return (
+            <Login
+                onLogin={handleLogin}
+            />
+        );
+
     }
 
+
     return (
+
         <Box
             sx={{
                 display: 'flex',
                 minHeight: '100vh'
             }}
         >
+
             <CssBaseline />
+
 
             <AppBar
                 position="fixed"
                 sx={{
-                    zIndex: (theme) => theme.zIndex.drawer + 1
+                    zIndex: (theme) =>
+                        theme.zIndex.drawer + 1
                 }}
             >
+
                 <Toolbar
                     sx={{
                         display: 'flex',
-                        justifyContent: 'space-between',
+                        justifyContent:
+                            'space-between',
                         gap: 2
                     }}
                 >
+
                     <Typography
                         variant="h6"
                         noWrap
@@ -326,6 +554,7 @@ function App() {
                         Sistema Escolar
                     </Typography>
 
+
                     <Box
                         sx={{
                             display: 'flex',
@@ -333,12 +562,22 @@ function App() {
                             gap: 2
                         }}
                     >
+
                         <Typography
                             variant="body2"
                             noWrap
                         >
-                            {usuario.nome} ({usuario.perfil})
+
+                            {usuario.nome}
+
+                            {' ('}
+
+                            {usuario.perfil}
+
+                            {')'}
+
                         </Typography>
+
 
                         <Button
                             color="inherit"
@@ -347,9 +586,13 @@ function App() {
                         >
                             Sair
                         </Button>
+
                     </Box>
+
                 </Toolbar>
+
             </AppBar>
+
 
             <Drawer
                 variant="permanent"
@@ -358,34 +601,69 @@ function App() {
                     flexShrink: 0,
 
                     '& .MuiDrawer-paper': {
+
                         width: drawerWidth,
-                        boxSizing: 'border-box'
+
+                        boxSizing:
+                            'border-box'
+
                     }
                 }}
             >
+
                 <Toolbar />
 
-                <Box sx={{ overflow: 'auto' }}>
+
+                <Box
+                    sx={{
+                        overflow: 'auto'
+                    }}
+                >
+
                     <List>
-                        {menuPermitido.map((item) => (
-                            <ListItem
-                                key={item.key}
-                                disablePadding
-                            >
-                                <ListItemButton
-                                    selected={view === item.key}
-                                    onClick={() => setView(item.key)}
+
+                        {menuPermitido.map(
+                            (item) => (
+
+                                <ListItem
+                                    key={item.key}
+                                    disablePadding
                                 >
-                                    <ListItemText
-                                        primary={item.label}
-                                        secondary={item.description}
-                                    />
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
+
+                                    <ListItemButton
+                                        selected={
+                                            view ===
+                                            item.key
+                                        }
+                                        onClick={() =>
+                                            setView(
+                                                item.key
+                                            )
+                                        }
+                                    >
+
+                                        <ListItemText
+                                            primary={
+                                                item.label
+                                            }
+                                            secondary={
+                                                item.description
+                                            }
+                                        />
+
+                                    </ListItemButton>
+
+                                </ListItem>
+
+                            )
+                        )}
+
                     </List>
+
                 </Box>
+
             </Drawer>
+
 
             <Box
                 component="main"
@@ -394,14 +672,22 @@ function App() {
                     p: 3
                 }}
             >
+
                 <Toolbar />
 
+
                 <Container maxWidth="xl">
+
                     {renderConteudo()}
+
                 </Container>
+
             </Box>
+
         </Box>
+
     );
 }
+
 
 export default App;

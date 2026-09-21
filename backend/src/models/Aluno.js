@@ -7,6 +7,10 @@ class Aluno extends Model { }
 
 Aluno.init(
     {
+        // ======================================================
+        // DADOS PRINCIPAIS
+        // ======================================================
+
         nome: {
             type: DataTypes.STRING,
             allowNull: false
@@ -19,29 +23,47 @@ Aluno.init(
         },
 
         data_nascimento: {
-            type: DataTypes.DATEONLY
+            type: DataTypes.DATEONLY,
+            allowNull: true
         },
 
-        turma: {
-            type: DataTypes.STRING
+
+        // ======================================================
+        // DADOS ESCOLARES
+        // ======================================================
+
+        serie: {
+            type: DataTypes.STRING,
+            allowNull: true
         },
 
-        // Campos do Boss Challenge
+
+        // ======================================================
+        // DADOS PESSOAIS
+        // ======================================================
+
         cpf: {
             type: DataTypes.STRING(14),
+            allowNull: true,
             unique: true
         },
 
         telefone: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            allowNull: true
         },
 
         endereco: {
-            type: DataTypes.TEXT
+            type: DataTypes.TEXT,
+            allowNull: true
         },
 
-        // MISSÃO 002
-        // Relacionamento: ALUNOS.fk_turma -> TURMAS.id
+
+        // ======================================================
+        // RELACIONAMENTO COM TURMA
+        // ALUNOS.fk_turma -> TURMAS.id
+        // ======================================================
+
         fk_turma: {
             type: DataTypes.INTEGER,
             allowNull: true
@@ -49,10 +71,13 @@ Aluno.init(
     },
     {
         sequelize,
+
         modelName: 'aluno',
+
         tableName: 'alunos',
+
         timestamps: false
     }
 );
 
-export default Aluno; 
+export default Aluno;

@@ -17,7 +17,10 @@ async function listarAlunos(req, res) {
 
     } catch (erro) {
 
-        console.error('Erro ao listar alunos:', erro);
+        console.error(
+            'Erro ao listar alunos:',
+            erro
+        );
 
         res.status(500).send(
             'Erro ao listar alunos: ' + erro.message
@@ -37,20 +40,35 @@ async function cadastrarAluno(req, res) {
     try {
 
         const dadosAluno = {
+
             nome: req.body.nome,
+
             email: req.body.email,
-            data_nascimento: req.body.data_nascimento || null,
-            serie: req.body.serie || null,
-            cpf: req.body.cpf || null,
-            telefone: req.body.telefone || null,
-            endereco: req.body.endereco || null,
+
+            data_nascimento:
+                req.body.data_nascimento || null,
+
+            serie:
+                req.body.serie || null,
+
+            cpf:
+                req.body.cpf || null,
+
+            telefone:
+                req.body.telefone || null,
+
+            endereco:
+                req.body.endereco || null,
 
             // O aluno pode ser cadastrado sem turma.
-            fk_turma: req.body.fk_turma || null
+            fk_turma:
+                req.body.fk_turma || null
+
         };
 
 
-        const novoAluno = await Aluno.create(dadosAluno);
+        const novoAluno =
+            await Aluno.create(dadosAluno);
 
 
         console.log(
@@ -91,7 +109,8 @@ async function buscarAluno(req, res) {
         const { id } = req.params;
 
 
-        const aluno = await Aluno.findByPk(id);
+        const aluno =
+            await Aluno.findByPk(id);
 
 
         if (!aluno) {
@@ -135,7 +154,8 @@ async function editarAluno(req, res) {
         const { id } = req.params;
 
 
-        const aluno = await Aluno.findByPk(id);
+        const aluno =
+            await Aluno.findByPk(id);
 
 
         if (!aluno) {
@@ -149,9 +169,11 @@ async function editarAluno(req, res) {
 
         await aluno.update({
 
-            nome: req.body.nome,
+            nome:
+                req.body.nome,
 
-            email: req.body.email,
+            email:
+                req.body.email,
 
             data_nascimento:
                 req.body.data_nascimento || null,
@@ -166,7 +188,11 @@ async function editarAluno(req, res) {
                 req.body.telefone || null,
 
             endereco:
-                req.body.endereco || null
+                req.body.endereco || null,
+
+            // Permite alterar ou remover a turma.
+            fk_turma:
+                req.body.fk_turma || null
 
         });
 
@@ -209,7 +235,8 @@ async function excluirAluno(req, res) {
         const { id } = req.params;
 
 
-        const aluno = await Aluno.findByPk(id);
+        const aluno =
+            await Aluno.findByPk(id);
 
 
         if (!aluno) {

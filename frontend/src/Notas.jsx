@@ -1,24 +1,16 @@
 import { useEffect, useState } from 'react';
 
-
-const API_URL = 'http://localhost:3000';
-
-function headersComToken() {
-    const token = localStorage.getItem('token');
-
-    return {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-    };
-}
-
 import {
     Alert,
     Box,
+    Button,
     Card,
     CardContent,
     Chip,
-    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Grid,
     MenuItem,
     Paper,
@@ -33,9 +25,37 @@ import {
     Typography
 } from '@mui/material';
 
+// ======================================================
+// API
+// ======================================================
+
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    'http://localhost:3000';
 
 // ======================================================
-// OPÇÕES FIXAS
+// HEADERS COM TOKEN
+// ======================================================
+
+function headersComToken() {
+
+    const token =
+        localStorage.getItem('token');
+
+    return {
+        'Content-Type': 'application/json',
+
+        ...(token
+            ? {
+                Authorization:
+                    `Bearer ${token}`
+            }
+            : {})
+    };
+}
+
+// ======================================================
+// BIMESTRES
 // ======================================================
 
 const BIMESTRES = [
@@ -44,9 +64,6 @@ const BIMESTRES = [
     '3º Bimestre',
     '4º Bimestre'
 ];
-
-
-
 
 // ======================================================
 // FORMULÁRIO INICIAL
@@ -59,72 +76,64 @@ const formularioInicial = {
     nota: ''
 };
 
-
 // ======================================================
-// FUNÇÕES DE APOIO (Boss Challenge)
+// CALCULAR MÉDIA
 // ======================================================
 
-// Nível 1 — média simples de uma lista de notas
 function calcularMedia(valores) {
 
-    if (!valores || valores.length === 0) {
+    if (
+        !valores ||
+        valores.length === 0
+    ) {
         return null;
     }
 
-    const soma = valores.reduce(
-        (acumulado, valor) => acumulado + Number(valor),
-        0
-    );
+    const soma =
+        valores.reduce(
+            (acumulado, valor) =>
+                acumulado + Number(valor),
+            0
+        );
 
     return soma / valores.length;
-
 }
 
+// ======================================================
+// SITUAÇÃO
+// ======================================================
 
-// Nível 2 — situação do aluno a partir da média
 function situacaoDaMedia(media) {
 
     if (media === null) {
-        return { texto: 'Sem notas', cor: 'default' };
+
+        return {
+            texto: 'Sem notas',
+            cor: 'default'
+        };
     }
 
     if (media >= 6) {
-        return { texto: 'Aprovado', cor: 'success' };
+
+        return {
+            texto: 'Aprovado',
+            cor: 'success'
+        };
     }
 
     if (media >= 4) {
-        return { texto: 'Recuperação', cor: 'warning' };
+
+        return {
+            texto: 'Recuperação',
+            cor: 'warning'
+        };
     }
 
-    return { texto: 'Reprovado', cor: 'error' };
-
+    return {
+        texto: 'Reprovado',
+        cor: 'error'
+    };
 }
-
-
-// Agrupa as notas de um aluno por disciplina e tira a média de cada uma
-function mediaPorDisciplina(notas) {
-
-    const grupos = {};
-
-    notas.forEach((nota) => {
-
-        if (!grupos[nota.disciplina]) {
-            grupos[nota.disciplina] = [];
-        }
-
-        grupos[nota.disciplina].push(nota.nota);
-
-    });
-
-    return Object.entries(grupos).map(
-        ([disciplina, valores]) => ({
-            disciplina,
-            media: calcularMedia(valores)
-        })
-    );
-
-}
-
 
 // ======================================================
 // AGRUPAR BOLETIM POR BIMESTRE
@@ -134,27 +143,32 @@ function agruparNotasPorBimestre(notas) {
 
     const grupos = {};
 
-    BIMESTRES.forEach((bimestre) => {
-        grupos[bimestre] = [];
-    });
-
-    notas.forEach((nota) => {
-
-        const bimestre =
-            BIMESTRES.includes(nota.bimestre)
-                ? nota.bimestre
-                : 'Outros';
-
-        if (!grupos[bimestre]) {
+    BIMESTRES.forEach(
+        (bimestre) => {
             grupos[bimestre] = [];
         }
+    );
 
-        grupos[bimestre].push(nota);
-    });
+    notas.forEach(
+        (nota) => {
+
+            const bimestre =
+                BIMESTRES.includes(
+                    nota.bimestre
+                )
+                    ? nota.bimestre
+                    : 'Outros';
+
+            if (!grupos[bimestre]) {
+                grupos[bimestre] = [];
+            }
+
+            grupos[bimestre].push(nota);
+        }
+    );
 
     return grupos;
 }
-
 
 // ======================================================
 // COMPONENTE
@@ -162,23 +176,46 @@ function agruparNotasPorBimestre(notas) {
 
 function Notas() {
 
-    const [form, setForm] = useState(
-        formularioInicial
-    );
+    // ==================================================
+    // ESTADOS
+    // ==================================================
 
-    const [notas, setNotas] = useState([]);
+    const [form, setForm] =
+        useState(formularioInicial);
 
-    const [alunos, setAlunos] = useState([]);
-    const [disciplinas, setDisciplinas] = useState([]);
+    const [notas, setNotas] =
+        useState([]);
 
-    const [mensagem, setMensagem] = useState('');
+    const [alunos, setAlunos] =
+        useState([]);
+
+    const [disciplinas, setDisciplinas] =
+        useState([]);
+
+    const [mensagem, setMensagem] =
+        useState('');
 
     const [tipoMensagem, setTipoMensagem] =
         useState('success');
 
+    const [carregando, setCarregando] =
+        useState(false);
+
+    const [salvando, setSalvando] =
+        useState(false);
+
+    const [excluindoId, setExcluindoId] =
+        useState(null);
 
     // ==================================================
-    // CONSULTA / BOLETIM DO ALUNO
+    // EDIÇÃO
+    // ==================================================
+
+    const [notaEditando, setNotaEditando] =
+        useState(null);
+
+    // ==================================================
+    // CONSULTA DO ALUNO
     // ==================================================
 
     const [alunoConsultaId, setAlunoConsultaId] =
@@ -190,117 +227,8 @@ function Notas() {
     const [notasConsulta, setNotasConsulta] =
         useState([]);
 
-
-    // ==================================================
-    // CARREGAR NOTAS (vem do Back-End, não é array fixo)
-    // ==================================================
-
-    async function carregarDisciplinas() {
-        try {
-            const resposta = await fetch(
-                'http://localhost:3000/disciplinas',
-                {
-                    headers: headersComToken()
-                }
-            );
-
-            if (!resposta.ok) {
-                throw new Error('Erro ao carregar disciplinas.');
-            }
-
-            const dados = await resposta.json();
-            setDisciplinas(Array.isArray(dados) ? dados : []);
-        } catch (erro) {
-            console.error(erro);
-            setDisciplinas([]);
-        }
-    }
-
-    async function carregarNotas() {
-
-        try {
-
-            const resposta = await fetch(
-                'http://localhost:3000/notas',
-                { headers: headersComToken() }
-            );
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    'Erro ao carregar notas.'
-                );
-
-            }
-
-            const dados =
-                await resposta.json();
-
-            setNotas(dados);
-
-        } catch (erro) {
-
-            console.error(erro);
-
-            mostrarMensagem(
-                erro.message,
-                'error'
-            );
-
-        }
-
-    }
-
-
-    // ==================================================
-    // CARREGAR ALUNOS (para o Select)
-    // ==================================================
-
-    async function carregarAlunos() {
-
-        try {
-
-            const resposta = await fetch(
-                'http://localhost:3000/alunos',
-                { headers: headersComToken() }
-            );
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    'Erro ao carregar alunos.'
-                );
-
-            }
-
-            const dados =
-                await resposta.json();
-
-            setAlunos(dados);
-
-        } catch (erro) {
-
-            console.error(erro);
-
-        }
-
-    }
-
-
-    // ==================================================
-    // CARREGAR TUDO
-    // ==================================================
-
-    useEffect(() => {
-
-        carregarDisciplinas();
-
-        carregarNotas();
-
-        carregarAlunos();
-
-    }, []);
-
+    const [carregandoBoletim, setCarregandoBoletim] =
+        useState(false);
 
     // ==================================================
     // MENSAGEM
@@ -312,11 +240,191 @@ function Notas() {
     ) {
 
         setMensagem(texto);
-
         setTipoMensagem(tipo);
-
     }
 
+    // ==================================================
+    // CARREGAR DISCIPLINAS
+    // ==================================================
+
+    async function carregarDisciplinas() {
+
+        try {
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/disciplinas`,
+                    {
+                        method: 'GET',
+                        headers:
+                            headersComToken()
+                    }
+                );
+
+            if (!resposta.ok) {
+
+                const erro =
+                    await resposta.text();
+
+                throw new Error(
+                    erro ||
+                    'Erro ao carregar disciplinas.'
+                );
+            }
+
+            const dados =
+                await resposta.json();
+
+            setDisciplinas(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao carregar disciplinas:',
+                erro
+            );
+
+            setDisciplinas([]);
+
+            mostrarMensagem(
+                erro.message ||
+                'Não foi possível carregar as disciplinas.',
+                'error'
+            );
+        }
+    }
+
+    // ==================================================
+    // CARREGAR ALUNOS
+    // ==================================================
+
+    async function carregarAlunos() {
+
+        try {
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/alunos`,
+                    {
+                        method: 'GET',
+                        headers:
+                            headersComToken()
+                    }
+                );
+
+            if (!resposta.ok) {
+
+                const erro =
+                    await resposta.text();
+
+                throw new Error(
+                    erro ||
+                    'Erro ao carregar alunos.'
+                );
+            }
+
+            const dados =
+                await resposta.json();
+
+            setAlunos(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao carregar alunos:',
+                erro
+            );
+
+            setAlunos([]);
+
+            mostrarMensagem(
+                erro.message ||
+                'Não foi possível carregar os alunos.',
+                'error'
+            );
+        }
+    }
+
+    // ==================================================
+    // CARREGAR NOTAS
+    // ==================================================
+
+    async function carregarNotas() {
+
+        try {
+
+            setCarregando(true);
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/notas`,
+                    {
+                        method: 'GET',
+                        headers:
+                            headersComToken()
+                    }
+                );
+
+            if (!resposta.ok) {
+
+                const erro =
+                    await resposta.text();
+
+                throw new Error(
+                    erro ||
+                    'Erro ao carregar notas.'
+                );
+            }
+
+            const dados =
+                await resposta.json();
+
+            setNotas(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao carregar notas:',
+                erro
+            );
+
+            setNotas([]);
+
+            mostrarMensagem(
+                erro.message ||
+                'Não foi possível carregar as notas.',
+                'error'
+            );
+
+        } finally {
+
+            setCarregando(false);
+        }
+    }
+
+    // ==================================================
+    // CARREGAR TUDO
+    // ==================================================
+
+    useEffect(() => {
+
+        carregarDisciplinas();
+        carregarAlunos();
+        carregarNotas();
+
+    }, []);
 
     // ==================================================
     // ALTERAR FORMULÁRIO
@@ -331,25 +439,61 @@ function Notas() {
 
         setForm(
             (formularioAnterior) => ({
-
                 ...formularioAnterior,
-
                 [name]: value
-
             })
         );
-
     }
 
+    // ==================================================
+    // VALIDAR NOTA
+    // ==================================================
+
+    function validarNota(valor) {
+
+        if (valor === '') {
+
+            mostrarMensagem(
+                'Informe a nota.',
+                'error'
+            );
+
+            return null;
+        }
+
+        const notaNumerica =
+            Number(valor);
+
+        if (
+            !Number.isFinite(
+                notaNumerica
+            ) ||
+            notaNumerica < 0 ||
+            notaNumerica > 10
+        ) {
+
+            mostrarMensagem(
+                'A nota deve ser um número entre 0 e 10.',
+                'error'
+            );
+
+            return null;
+        }
+
+        return notaNumerica;
+    }
 
     // ==================================================
-    // CADASTRAR NOTA
+    // SALVAR NOTA
     // ==================================================
 
-    async function cadastrarNota(event) {
+    async function salvarNota(event) {
 
-        event.preventDefault();
+        if (event) {
+            event.preventDefault();
+        }
 
+        setMensagem('');
 
         if (!form.aluno_id) {
 
@@ -361,7 +505,6 @@ function Notas() {
             return;
         }
 
-
         if (!form.disciplina) {
 
             mostrarMensagem(
@@ -371,7 +514,6 @@ function Notas() {
 
             return;
         }
-
 
         if (!form.bimestre) {
 
@@ -383,138 +525,346 @@ function Notas() {
             return;
         }
 
+        const notaNumerica =
+            validarNota(form.nota);
 
-        if (form.nota === '') {
-
-            mostrarMensagem(
-                'Informe a nota.',
-                'error'
-            );
-
+        if (notaNumerica === null) {
             return;
         }
-
-
-        const notaNumerica = Number(form.nota);
-
-        if (
-            Number.isNaN(notaNumerica) ||
-            notaNumerica < 0 ||
-            notaNumerica > 10
-        ) {
-
-            mostrarMensagem(
-                'A nota deve ser um número entre 0 e 10.',
-                'error'
-            );
-
-            return;
-        }
-
 
         try {
 
-            const resposta = await fetch(
-                'http://localhost:3000/notas',
-                {
-                    method: 'POST',
+            setSalvando(true);
 
-                    headers: headersComToken(),
+            const estaEditando =
+                notaEditando !== null;
 
-                    body: JSON.stringify({
+            const url =
+                estaEditando
+                    ? `${API_URL}/notas/${notaEditando.id}`
+                    : `${API_URL}/notas`;
 
-                        aluno_id:
-                            Number(form.aluno_id),
+            const metodo =
+                estaEditando
+                    ? 'PUT'
+                    : 'POST';
 
-                        disciplina:
-                            form.disciplina,
+            const resposta =
+                await fetch(
+                    url,
+                    {
+                        method: metodo,
 
-                        bimestre:
-                            form.bimestre,
+                        headers:
+                            headersComToken(),
 
-                        nota:
-                            notaNumerica
+                        body:
+                            JSON.stringify({
 
-                    })
-                }
-            );
+                                aluno_id:
+                                    Number(
+                                        form.aluno_id
+                                    ),
 
+                                disciplina:
+                                    form.disciplina,
+
+                                bimestre:
+                                    form.bimestre,
+
+                                nota:
+                                    notaNumerica
+                            })
+                    }
+                );
+
+            let dadosResposta = {};
+
+            try {
+
+                dadosResposta =
+                    await resposta.json();
+
+            } catch {
+
+                dadosResposta = {};
+            }
 
             if (!resposta.ok) {
 
-                const erro =
-                    await resposta.text();
+                if (
+                    resposta.status === 409
+                ) {
+
+                    throw new Error(
+                        'Já existe uma nota para este aluno, disciplina e bimestre.'
+                    );
+                }
+
+                if (
+                    resposta.status === 401
+                ) {
+
+                    throw new Error(
+                        'Sua sessão expirou. Faça login novamente.'
+                    );
+                }
+
+                if (
+                    resposta.status === 403
+                ) {
+
+                    throw new Error(
+                        'Você não tem permissão para alterar notas.'
+                    );
+                }
 
                 throw new Error(
-                    erro ||
+                    dadosResposta.mensagem ||
+                    dadosResposta.erro ||
                     'Erro ao salvar nota.'
                 );
-
             }
 
-
             mostrarMensagem(
-                'Nota cadastrada com sucesso!',
+                estaEditando
+                    ? 'Nota atualizada com sucesso!'
+                    : 'Nota cadastrada com sucesso!',
                 'success'
             );
 
-            setForm(
-                (formularioAnterior) => ({
-                    ...formularioInicial,
-                    aluno_id: formularioAnterior.aluno_id
-                })
-            );
+            const alunoAtual =
+                form.aluno_id;
+
+            setForm({
+                ...formularioInicial,
+                aluno_id:
+                    alunoAtual
+            });
+
+            setNotaEditando(null);
 
             await carregarNotas();
 
-            // Se a nota cadastrada é do aluno que está sendo
-            // consultado no boletim, atualiza a consulta também.
             if (
                 alunoConsultaId &&
-                Number(alunoConsultaId) === Number(form.aluno_id)
+                Number(alunoConsultaId) ===
+                    Number(alunoAtual)
             ) {
 
-                await consultarAluno(alunoConsultaId);
-
+                await consultarAluno(
+                    alunoConsultaId
+                );
             }
-
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao salvar nota:',
+                erro
+            );
 
             mostrarMensagem(
-                erro.message,
+                erro.message ||
+                'Erro ao salvar nota.',
                 'error'
             );
 
-        }
+        } finally {
 
+            setSalvando(false);
+        }
     }
 
+    // ==================================================
+    // ABRIR EDIÇÃO
+    // ==================================================
+
+    function editarNota(nota) {
+
+        setNotaEditando(nota);
+
+        setForm({
+
+            aluno_id:
+                String(
+                    nota.aluno_id
+                ),
+
+            disciplina:
+                nota.disciplina || '',
+
+            bimestre:
+                nota.bimestre || '',
+
+            nota:
+                String(
+                    nota.nota
+                )
+        });
+
+        setMensagem('');
+
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
 
     // ==================================================
-    // CONSULTAR NOTAS DE UM ALUNO (GET /notas/aluno/:id)
+    // CANCELAR EDIÇÃO
     // ==================================================
 
-    async function consultarAluno(alunoId) {
+    function cancelarEdicao() {
+
+        setNotaEditando(null);
+
+        setForm(
+            formularioInicial
+        );
+
+        setMensagem('');
+    }
+
+    // ==================================================
+    // EXCLUIR NOTA
+    // ==================================================
+
+    async function excluirNota(id) {
+
+        const confirmar =
+            window.confirm(
+                'Deseja realmente excluir esta nota?'
+            );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+
+            setExcluindoId(id);
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/notas/${id}`,
+                    {
+                        method: 'DELETE',
+                        headers:
+                            headersComToken()
+                    }
+                );
+
+            let dados = {};
+
+            try {
+
+                dados =
+                    await resposta.json();
+
+            } catch {
+
+                dados = {};
+            }
+
+            if (!resposta.ok) {
+
+                if (
+                    resposta.status === 401
+                ) {
+
+                    throw new Error(
+                        'Sua sessão expirou. Faça login novamente.'
+                    );
+                }
+
+                if (
+                    resposta.status === 403
+                ) {
+
+                    throw new Error(
+                        'Você não tem permissão para excluir notas.'
+                    );
+                }
+
+                throw new Error(
+                    dados.mensagem ||
+                    dados.erro ||
+                    'Erro ao excluir nota.'
+                );
+            }
+
+            mostrarMensagem(
+                'Nota excluída com sucesso!',
+                'success'
+            );
+
+            if (
+                notaEditando &&
+                Number(notaEditando.id) ===
+                    Number(id)
+            ) {
+
+                cancelarEdicao();
+            }
+
+            await carregarNotas();
+
+            if (alunoConsultaId) {
+
+                await consultarAluno(
+                    alunoConsultaId
+                );
+            }
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao excluir nota:',
+                erro
+            );
+
+            mostrarMensagem(
+                erro.message ||
+                'Erro ao excluir nota.',
+                'error'
+            );
+
+        } finally {
+
+            setExcluindoId(null);
+        }
+    }
+
+    // ==================================================
+    // CONSULTAR BOLETIM
+    // ==================================================
+
+    async function consultarAluno(
+        alunoId
+    ) {
 
         if (!alunoId) {
 
             setNotasConsulta([]);
-
             setAlunoConsultaNome('');
 
             return;
         }
 
-
         try {
 
-            const resposta = await fetch(
-                `http://localhost:3000/notas/aluno/${alunoId}`,
-                { headers: headersComToken() }
-            );
+            setCarregandoBoletim(true);
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/notas/aluno/${alunoId}`,
+                    {
+                        method: 'GET',
+                        headers:
+                            headersComToken()
+                    }
+                );
 
             if (!resposta.ok) {
 
@@ -525,94 +875,132 @@ function Notas() {
                     erro ||
                     'Erro ao consultar notas do aluno.'
                 );
-
             }
 
             const dados =
                 await resposta.json();
 
-            setNotasConsulta(dados.notas);
+            setNotasConsulta(
+                Array.isArray(dados.notas)
+                    ? dados.notas
+                    : []
+            );
 
-            setAlunoConsultaNome(dados.aluno.nome);
+            setAlunoConsultaNome(
+                dados.aluno?.nome || ''
+            );
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao consultar boletim:',
+                erro
+            );
 
             mostrarMensagem(
-                erro.message,
+                erro.message ||
+                'Erro ao consultar notas do aluno.',
                 'error'
             );
 
             setNotasConsulta([]);
 
+        } finally {
+
+            setCarregandoBoletim(false);
         }
-
     }
 
-
-    function alterarAlunoConsulta(event) {
-
-        const novoId = event.target.value;
-
-        setAlunoConsultaId(novoId);
-
-        consultarAluno(novoId);
-
-    }
-
-
     // ==================================================
-    // NOME DO ALUNO A PARTIR DO ID
+    // ALTERAR ALUNO DO BOLETIM
     // ==================================================
 
-    function nomeDoAluno(alunoId) {
+    function alterarAlunoConsulta(
+        event
+    ) {
 
-        const aluno = alunos.find(
-            (item) => item.id === alunoId
+        const novoId =
+            event.target.value;
+
+        setAlunoConsultaId(
+            novoId
         );
 
-        return aluno ? aluno.nome : '—';
-
+        consultarAluno(
+            novoId
+        );
     }
 
+    // ==================================================
+    // NOME DO ALUNO
+    // ==================================================
+
+    function nomeDoAluno(
+        alunoId
+    ) {
+
+        const aluno =
+            alunos.find(
+                (item) =>
+                    Number(item.id) ===
+                    Number(alunoId)
+            );
+
+        return aluno
+            ? aluno.nome
+            : '—';
+    }
 
     // ==================================================
-    // BOSS CHALLENGE — NÍVEL 3
-    // MAIOR NOTA / MENOR NOTA / MÉDIA DA TURMA
+    // ESTATÍSTICAS
     // ==================================================
 
     const valoresDeTodasAsNotas =
-        notas.map((item) => Number(item.nota));
+        notas.map(
+            (item) =>
+                Number(item.nota)
+        );
 
     const maiorNota =
         valoresDeTodasAsNotas.length
-            ? Math.max(...valoresDeTodasAsNotas)
+            ? Math.max(
+                ...valoresDeTodasAsNotas
+            )
             : null;
 
     const menorNota =
         valoresDeTodasAsNotas.length
-            ? Math.min(...valoresDeTodasAsNotas)
+            ? Math.min(
+                ...valoresDeTodasAsNotas
+            )
             : null;
 
     const mediaDaTurma =
-        calcularMedia(valoresDeTodasAsNotas);
-
+        calcularMedia(
+            valoresDeTodasAsNotas
+        );
 
     // ==================================================
-    // BOLETIM DO ALUNO CONSULTADO (Níveis 1, 2 e 4)
+    // BOLETIM
     // ==================================================
 
     const boletimPorBimestre =
-        agruparNotasPorBimestre(notasConsulta);
+        agruparNotasPorBimestre(
+            notasConsulta
+        );
 
-    const mediaGeralAluno = calcularMedia(
-        notasConsulta.map((item) => item.nota)
-    );
+    const mediaGeralAluno =
+        calcularMedia(
+            notasConsulta.map(
+                (item) =>
+                    item.nota
+            )
+        );
 
     const situacaoAluno =
-        situacaoDaMedia(mediaGeralAluno);
-
+        situacaoDaMedia(
+            mediaGeralAluno
+        );
 
     // ==================================================
     // RENDER
@@ -622,22 +1010,29 @@ function Notas() {
 
         <Box>
 
+            {/* ==========================================
+                TÍTULO
+            ========================================== */}
+
             <Typography
                 variant="h4"
                 fontWeight="bold"
-                sx={{ mb: 1 }}
+                sx={{
+                    mb: 1
+                }}
             >
                 Lançamento de Notas
             </Typography>
 
-
             <Typography
                 color="text.secondary"
-                sx={{ mb: 3 }}
+                sx={{
+                    mb: 3
+                }}
             >
-                Cadastre, consulte e acompanhe o desempenho dos alunos.
+                Cadastre, edite, consulte e acompanhe
+                o desempenho dos alunos.
             </Typography>
-
 
             {/* ==========================================
                 MENSAGEM
@@ -646,8 +1041,13 @@ function Notas() {
             {mensagem && (
 
                 <Alert
-                    severity={tipoMensagem}
-                    sx={{ mb: 3 }}
+                    severity={
+                        tipoMensagem
+                    }
+
+                    sx={{
+                        mb: 3
+                    }}
 
                     onClose={() =>
                         setMensagem('')
@@ -658,9 +1058,8 @@ function Notas() {
 
             )}
 
-
             {/* ==========================================
-                CADASTRO DE NOTAS
+                FORMULÁRIO
             ========================================== */}
 
             <Card
@@ -674,15 +1073,20 @@ function Notas() {
                     <Typography
                         variant="h6"
                         fontWeight="bold"
-                        sx={{ mb: 3 }}
+                        sx={{
+                            mb: 3
+                        }}
                     >
-                        Cadastro de Notas
+                        {notaEditando
+                            ? 'Editar Nota'
+                            : 'Cadastro de Notas'}
                     </Typography>
-
 
                     <Box
                         component="form"
-                        onSubmit={cadastrarNota}
+                        onSubmit={
+                            salvarNota
+                        }
                     >
 
                         <Grid
@@ -714,16 +1118,27 @@ function Notas() {
                                     onChange={
                                         handleChange
                                     }
+
+                                    disabled={
+                                        salvando
+                                    }
                                 >
 
                                     {alunos.map(
                                         (aluno) => (
 
                                             <MenuItem
-                                                key={aluno.id}
-                                                value={aluno.id}
+                                                key={
+                                                    aluno.id
+                                                }
+
+                                                value={
+                                                    aluno.id
+                                                }
                                             >
-                                                {aluno.nome}
+                                                {
+                                                    aluno.nome
+                                                }
                                             </MenuItem>
 
                                         )
@@ -743,7 +1158,6 @@ function Notas() {
                                 </TextField>
 
                             </Grid>
-
 
                             {/* DISCIPLINA */}
 
@@ -769,25 +1183,49 @@ function Notas() {
                                     onChange={
                                         handleChange
                                     }
+
+                                    disabled={
+                                        salvando
+                                    }
                                 >
 
                                     {disciplinas.map(
                                         (disciplina) => (
 
                                             <MenuItem
-                                                key={disciplina.nome || disciplina}
-                                                value={disciplina.nome || disciplina}
+                                                key={
+                                                    disciplina.id ||
+                                                    disciplina.nome
+                                                }
+
+                                                value={
+                                                    disciplina.nome ||
+                                                    disciplina
+                                                }
                                             >
-                                                {disciplina.nome || disciplina}
+                                                {
+                                                    disciplina.nome ||
+                                                    disciplina
+                                                }
                                             </MenuItem>
 
                                         )
                                     )}
 
+                                    {disciplinas.length === 0 && (
+
+                                        <MenuItem
+                                            value=""
+                                            disabled
+                                        >
+                                            Nenhuma disciplina cadastrada
+                                        </MenuItem>
+
+                                    )}
+
                                 </TextField>
 
                             </Grid>
-
 
                             {/* BIMESTRE */}
 
@@ -813,16 +1251,27 @@ function Notas() {
                                     onChange={
                                         handleChange
                                     }
+
+                                    disabled={
+                                        salvando
+                                    }
                                 >
 
                                     {BIMESTRES.map(
                                         (bimestre) => (
 
                                             <MenuItem
-                                                key={bimestre}
-                                                value={bimestre}
+                                                key={
+                                                    bimestre
+                                                }
+
+                                                value={
+                                                    bimestre
+                                                }
                                             >
-                                                {bimestre}
+                                                {
+                                                    bimestre
+                                                }
                                             </MenuItem>
 
                                         )
@@ -831,7 +1280,6 @@ function Notas() {
                                 </TextField>
 
                             </Grid>
-
 
                             {/* NOTA */}
 
@@ -859,43 +1307,67 @@ function Notas() {
                                         handleChange
                                     }
 
+                                    disabled={
+                                        salvando
+                                    }
+
                                     inputProps={{
                                         min: 0,
                                         max: 10,
                                         step: 0.1
                                     }}
-
                                 />
 
                             </Grid>
 
                         </Grid>
 
-
                         {/* BOTÕES */}
 
                         <Stack
-                            direction="row"
+                            direction={{
+                                xs: 'column',
+                                sm: 'row'
+                            }}
+
                             spacing={2}
-                            sx={{ mt: 3 }}
+
+                            sx={{
+                                mt: 3
+                            }}
                         >
 
                             <Button
                                 type="submit"
                                 variant="contained"
-                            >
-                                Salvar
-                            </Button>
 
+                                disabled={
+                                    salvando
+                                }
+                            >
+                                {salvando
+                                    ? 'Salvando...'
+                                    : notaEditando
+                                        ? 'Atualizar nota'
+                                        : 'Salvar nota'}
+                            </Button>
 
                             <Button
                                 type="button"
                                 variant="outlined"
 
+                                disabled={
+                                    salvando
+                                }
+
                                 onClick={() => {
 
                                     setForm(
                                         formularioInicial
+                                    );
+
+                                    setNotaEditando(
+                                        null
                                     );
 
                                     setMensagem('');
@@ -905,6 +1377,26 @@ function Notas() {
                                 Limpar
                             </Button>
 
+                            {notaEditando && (
+
+                                <Button
+                                    type="button"
+                                    variant="outlined"
+                                    color="inherit"
+
+                                    disabled={
+                                        salvando
+                                    }
+
+                                    onClick={
+                                        cancelarEdicao
+                                    }
+                                >
+                                    Cancelar edição
+                                </Button>
+
+                            )}
+
                         </Stack>
 
                     </Box>
@@ -913,79 +1405,149 @@ function Notas() {
 
             </Card>
 
-
             {/* ==========================================
-                BOSS CHALLENGE — NÍVEL 3
-                MAIOR / MENOR / MÉDIA DA TURMA
+                ESTATÍSTICAS
             ========================================== */}
 
             <Grid
                 container
                 spacing={2}
-                sx={{ mb: 4 }}
+                sx={{
+                    mb: 4
+                }}
             >
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                    item
+                    xs={12}
+                    md={4}
+                >
+
                     <Paper
                         variant="outlined"
-                        sx={{ p: 2.5, borderRadius: 3, textAlign: 'center' }}
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 3,
+                            textAlign: 'center'
+                        }}
                     >
-                        <Typography color="text.secondary" variant="body2">
+
+                        <Typography
+                            color="text.secondary"
+                            variant="body2"
+                        >
                             Maior Nota
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="success.main">
-                            {maiorNota !== null ? maiorNota.toFixed(1) : '—'}
+
+                        <Typography
+                            variant="h4"
+                            fontWeight="bold"
+                            color="success.main"
+                        >
+                            {maiorNota !== null
+                                ? maiorNota.toFixed(1)
+                                : '—'}
                         </Typography>
+
                     </Paper>
+
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                    item
+                    xs={12}
+                    md={4}
+                >
+
                     <Paper
                         variant="outlined"
-                        sx={{ p: 2.5, borderRadius: 3, textAlign: 'center' }}
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 3,
+                            textAlign: 'center'
+                        }}
                     >
-                        <Typography color="text.secondary" variant="body2">
+
+                        <Typography
+                            color="text.secondary"
+                            variant="body2"
+                        >
                             Menor Nota
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="error.main">
-                            {menorNota !== null ? menorNota.toFixed(1) : '—'}
+
+                        <Typography
+                            variant="h4"
+                            fontWeight="bold"
+                            color="error.main"
+                        >
+                            {menorNota !== null
+                                ? menorNota.toFixed(1)
+                                : '—'}
                         </Typography>
+
                     </Paper>
+
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                    item
+                    xs={12}
+                    md={4}
+                >
+
                     <Paper
                         variant="outlined"
-                        sx={{ p: 2.5, borderRadius: 3, textAlign: 'center' }}
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 3,
+                            textAlign: 'center'
+                        }}
                     >
-                        <Typography color="text.secondary" variant="body2">
+
+                        <Typography
+                            color="text.secondary"
+                            variant="body2"
+                        >
                             Média da Turma
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="primary.main">
-                            {mediaDaTurma !== null ? mediaDaTurma.toFixed(2) : '—'}
+
+                        <Typography
+                            variant="h4"
+                            fontWeight="bold"
+                            color="primary.main"
+                        >
+                            {mediaDaTurma !== null
+                                ? mediaDaTurma.toFixed(2)
+                                : '—'}
                         </Typography>
+
                     </Paper>
+
                 </Grid>
 
             </Grid>
 
-
             {/* ==========================================
-                LISTAGEM GERAL DE NOTAS
+                LISTAGEM
             ========================================== */}
 
-            <Card sx={{ mb: 4 }}>
+            <Card
+                sx={{
+                    mb: 4
+                }}
+            >
 
                 <CardContent>
 
                     <Typography
                         variant="h6"
                         fontWeight="bold"
-                        sx={{ mb: 2 }}
+                        sx={{
+                            mb: 2
+                        }}
                     >
                         Notas cadastradas
                     </Typography>
-
 
                     <TableContainer
                         component={Paper}
@@ -998,60 +1560,83 @@ function Notas() {
 
                                 <TableRow>
 
-                                    <TableCell><strong>Aluno</strong></TableCell>
-                                    <TableCell><strong>Disciplina</strong></TableCell>
-                                    <TableCell><strong>Bimestre</strong></TableCell>
-                                    <TableCell><strong>Nota</strong></TableCell>
+                                    <TableCell>
+                                        <strong>
+                                            Aluno
+                                        </strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>
+                                            Disciplina
+                                        </strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>
+                                            Bimestre
+                                        </strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>
+                                            Nota
+                                        </strong>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <strong>
+                                            Situação
+                                        </strong>
+                                    </TableCell>
+
+                                    <TableCell align="center">
+                                        <strong>
+                                            Ações
+                                        </strong>
+                                    </TableCell>
 
                                 </TableRow>
 
                             </TableHead>
 
-
                             <TableBody>
 
-                                {notas.map((item) => (
-
-                                    <TableRow
-                                        key={item.id}
-                                        hover
-                                    >
-
-                                        <TableCell>
-                                            {item.aluno
-                                                ? item.aluno.nome
-                                                : nomeDoAluno(item.aluno_id)}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {item.disciplina}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {item.bimestre}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {Number(item.nota).toFixed(1)}
-                                        </TableCell>
-
-                                    </TableRow>
-
-                                ))}
-
-
-                                {notas.length === 0 && (
+                                {carregando ? (
 
                                     <TableRow>
 
                                         <TableCell
-                                            colSpan={4}
+                                            colSpan={6}
+                                            align="center"
+                                        >
+
+                                            <Typography
+                                                sx={{
+                                                    py: 4
+                                                }}
+                                            >
+                                                Carregando notas...
+                                            </Typography>
+
+                                        </TableCell>
+
+                                    </TableRow>
+
+                                ) : notas.length === 0 ? (
+
+                                    <TableRow>
+
+                                        <TableCell
+                                            colSpan={6}
                                             align="center"
                                         >
 
                                             <Typography
                                                 color="text.secondary"
-                                                sx={{ py: 4 }}
+                                                sx={{
+                                                    py: 4
+                                                }}
                                             >
                                                 Nenhuma nota cadastrada ainda.
                                             </Typography>
@@ -1059,6 +1644,141 @@ function Notas() {
                                         </TableCell>
 
                                     </TableRow>
+
+                                ) : (
+
+                                    notas.map(
+                                        (item) => {
+
+                                            const nota =
+                                                Number(
+                                                    item.nota
+                                                );
+
+                                            const situacao =
+                                                situacaoDaMedia(
+                                                    nota
+                                                );
+
+                                            return (
+
+                                                <TableRow
+                                                    key={
+                                                        item.id
+                                                    }
+                                                    hover
+                                                >
+
+                                                    <TableCell>
+                                                        {
+                                                            item.aluno
+                                                                ? item.aluno.nome
+                                                                : nomeDoAluno(
+                                                                    item.aluno_id
+                                                                )
+                                                        }
+                                                    </TableCell>
+
+                                                    <TableCell>
+                                                        {
+                                                            item.disciplina
+                                                        }
+                                                    </TableCell>
+
+                                                    <TableCell>
+                                                        {
+                                                            item.bimestre
+                                                        }
+                                                    </TableCell>
+
+                                                    <TableCell>
+                                                        <strong>
+                                                            {
+                                                                nota.toFixed(
+                                                                    1
+                                                                )
+                                                            }
+                                                        </strong>
+                                                    </TableCell>
+
+                                                    <TableCell>
+
+                                                        <Chip
+                                                            size="small"
+
+                                                            label={
+                                                                situacao.texto
+                                                            }
+
+                                                            color={
+                                                                situacao.cor
+                                                            }
+                                                        />
+
+                                                    </TableCell>
+
+                                                    <TableCell>
+
+                                                        <Stack
+                                                            direction={{
+                                                                xs: 'column',
+                                                                sm: 'row'
+                                                            }}
+
+                                                            spacing={1}
+
+                                                            justifyContent="center"
+                                                        >
+
+                                                            <Button
+                                                                size="small"
+                                                                variant="outlined"
+
+                                                                disabled={
+                                                                    salvando ||
+                                                                    excluindoId !== null
+                                                                }
+
+                                                                onClick={() =>
+                                                                    editarNota(
+                                                                        item
+                                                                    )
+                                                                }
+                                                            >
+                                                                Editar
+                                                            </Button>
+
+                                                            <Button
+                                                                size="small"
+                                                                color="error"
+                                                                variant="outlined"
+
+                                                                disabled={
+                                                                    salvando ||
+                                                                    excluindoId !== null
+                                                                }
+
+                                                                onClick={() =>
+                                                                    excluirNota(
+                                                                        item.id
+                                                                    )
+                                                                }
+                                                            >
+                                                                {excluindoId ===
+                                                                    item.id
+                                                                    ? 'Excluindo...'
+                                                                    : 'Excluir'}
+                                                            </Button>
+
+                                                        </Stack>
+
+                                                    </TableCell>
+
+                                                </TableRow>
+
+                                            );
+                                        }
+                                    )
 
                                 )}
 
@@ -1072,10 +1792,8 @@ function Notas() {
 
             </Card>
 
-
             {/* ==========================================
-                BOLETIM DO ALUNO
-                (Boss Challenge Níveis 1, 2 e 4)
+                BOLETIM
             ========================================== */}
 
             <Card>
@@ -1085,23 +1803,30 @@ function Notas() {
                     <Typography
                         variant="h6"
                         fontWeight="bold"
-                        sx={{ mb: 1 }}
+                        sx={{
+                            mb: 1
+                        }}
                     >
                         Boletim do Aluno
                     </Typography>
 
                     <Typography
                         color="text.secondary"
-                        sx={{ mb: 3 }}
+                        sx={{
+                            mb: 3
+                        }}
                     >
-                        Selecione um aluno para ver a média por disciplina, a média geral e a situação.
+                        Selecione um aluno para visualizar
+                        suas notas, médias e situação.
                     </Typography>
-
 
                     <TextField
                         select
                         label="Aluno"
-                        sx={{ minWidth: 260, mb: 3 }}
+                        sx={{
+                            minWidth: 260,
+                            mb: 3
+                        }}
 
                         value={
                             alunoConsultaId
@@ -1120,10 +1845,17 @@ function Notas() {
                             (aluno) => (
 
                                 <MenuItem
-                                    key={aluno.id}
-                                    value={aluno.id}
+                                    key={
+                                        aluno.id
+                                    }
+
+                                    value={
+                                        aluno.id
+                                    }
                                 >
-                                    {aluno.nome}
+                                    {
+                                        aluno.nome
+                                    }
                                 </MenuItem>
 
                             )
@@ -1131,26 +1863,42 @@ function Notas() {
 
                     </TextField>
 
-
                     {alunoConsultaId && (
 
                         <Paper
                             variant="outlined"
-                            sx={{ p: 3, borderRadius: 3 }}
+                            sx={{
+                                p: 3,
+                                borderRadius: 3
+                            }}
                         >
 
                             <Typography
                                 variant="subtitle1"
                                 fontWeight="bold"
-                                sx={{ mb: 1 }}
+                                sx={{
+                                    mb: 2
+                                }}
                             >
-                                Aluno: {alunoConsultaNome}
+                                Aluno:{' '}
+                                {
+                                    alunoConsultaNome
+                                }
                             </Typography>
 
+                            {carregandoBoletim ? (
 
-                            {notasConsulta.length === 0 ? (
+                                <Typography
+                                    color="text.secondary"
+                                >
+                                    Carregando boletim...
+                                </Typography>
 
-                                <Typography color="text.secondary">
+                            ) : notasConsulta.length === 0 ? (
+
+                                <Typography
+                                    color="text.secondary"
+                                >
                                     Este aluno ainda não tem notas lançadas.
                                 </Typography>
 
@@ -1158,133 +1906,183 @@ function Notas() {
 
                                 <>
 
-                                    {BIMESTRES.map((bimestre) => {
+                                    {BIMESTRES.map(
+                                        (bimestre) => {
 
-                                        const notasDoBimestre =
-                                            boletimPorBimestre[bimestre] || [];
+                                            const notasDoBimestre =
+                                                boletimPorBimestre[
+                                                    bimestre
+                                                ] || [];
 
-                                        if (notasDoBimestre.length === 0) {
                                             return (
+
                                                 <Box
-                                                    key={bimestre}
+                                                    key={
+                                                        bimestre
+                                                    }
+
                                                     sx={{
-                                                        mb: 2,
+                                                        mb: 3,
                                                         p: 2,
                                                         borderRadius: 2,
-                                                        border: '1px dashed rgba(255,255,255,.18)',
-                                                        backgroundColor: 'rgba(255,255,255,.02)'
+                                                        border:
+                                                            '1px solid rgba(255,255,255,.12)',
+                                                        backgroundColor:
+                                                            'rgba(255,255,255,.025)'
                                                     }}
                                                 >
-                                                    <Typography
-                                                        fontWeight="bold"
-                                                        sx={{ mb: 0.5 }}
-                                                    >
-                                                        {bimestre}
-                                                    </Typography>
-
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        variant="body2"
-                                                    >
-                                                        Nenhuma nota lançada neste bimestre.
-                                                    </Typography>
-                                                </Box>
-                                            );
-                                        }
-
-                                        return (
-                                            <Box
-                                                key={bimestre}
-                                                sx={{
-                                                    mb: 3,
-                                                    p: 2,
-                                                    borderRadius: 2.5,
-                                                    border: '1px solid rgba(255,255,255,.12)',
-                                                    backgroundColor: 'rgba(255,255,255,.025)'
-                                                }}
-                                            >
-
-                                                <Typography
-                                                    variant="h6"
-                                                    fontWeight="bold"
-                                                    sx={{ mb: 1.5 }}
-                                                >
-                                                    {bimestre}
-                                                </Typography>
-
-                                                <Stack spacing={0.5}>
-
-                                                    {notasDoBimestre.map(
-                                                        (item) => (
-                                                            <Box
-                                                                key={item.id}
-                                                                sx={{
-                                                                    display: 'flex',
-                                                                    justifyContent: 'space-between',
-                                                                    alignItems: 'center',
-                                                                    borderBottom: '1px dotted rgba(255,255,255,.18)',
-                                                                    py: 0.75
-                                                                }}
-                                                            >
-
-                                                                <Typography>
-                                                                    {item.disciplina}
-                                                                </Typography>
-
-                                                                <Typography
-                                                                    fontWeight={700}
-                                                                >
-                                                                    {Number(item.nota).toFixed(1)}
-                                                                </Typography>
-
-                                                            </Box>
-                                                        )
-                                                    )}
-
-                                                </Stack>
-
-                                                <Box
-                                                    sx={{
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center',
-                                                        mt: 1.5,
-                                                        pt: 1.25,
-                                                        borderTop: '1px solid rgba(255,255,255,.14)'
-                                                    }}
-                                                >
-
-                                                    <Typography
-                                                        variant="body1"
-                                                        fontWeight="bold"
-                                                    >
-                                                        Média do {bimestre}:
-                                                    </Typography>
 
                                                     <Typography
                                                         variant="h6"
                                                         fontWeight="bold"
+                                                        sx={{
+                                                            mb: 1.5
+                                                        }}
                                                     >
-                                                        {calcularMedia(
-                                                            notasDoBimestre.map(
-                                                                (item) => item.nota
-                                                            )
-                                                        ).toFixed(2)}
+                                                        {
+                                                            bimestre
+                                                        }
                                                     </Typography>
+
+                                                    {notasDoBimestre.length === 0 ? (
+
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="body2"
+                                                        >
+                                                            Nenhuma nota lançada neste bimestre.
+                                                        </Typography>
+
+                                                    ) : (
+
+                                                        <>
+
+                                                            <Stack
+                                                                spacing={
+                                                                    0.5
+                                                                }
+                                                            >
+
+                                                                {notasDoBimestre.map(
+                                                                    (item) => (
+
+                                                                        <Box
+                                                                            key={
+                                                                                item.id
+                                                                            }
+
+                                                                            sx={{
+                                                                                display:
+                                                                                    'flex',
+                                                                                justifyContent:
+                                                                                    'space-between',
+                                                                                alignItems:
+                                                                                    'center',
+                                                                                borderBottom:
+                                                                                    '1px dotted rgba(255,255,255,.18)',
+                                                                                py:
+                                                                                    0.75
+                                                                            }}
+                                                                        >
+
+                                                                            <Typography>
+                                                                                {
+                                                                                    item.disciplina
+                                                                                }
+                                                                            </Typography>
+
+                                                                            <Typography
+                                                                                fontWeight={
+                                                                                    700
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    Number(
+                                                                                        item.nota
+                                                                                    ).toFixed(
+                                                                                        1
+                                                                                    )
+                                                                                }
+                                                                            </Typography>
+
+                                                                        </Box>
+
+                                                                    )
+                                                                )}
+
+                                                            </Stack>
+
+                                                            <Box
+                                                                sx={{
+                                                                    display:
+                                                                        'flex',
+                                                                    justifyContent:
+                                                                        'space-between',
+                                                                    alignItems:
+                                                                        'center',
+                                                                    mt:
+                                                                        1.5,
+                                                                    pt:
+                                                                        1.25,
+                                                                    borderTop:
+                                                                        '1px solid rgba(255,255,255,.14)'
+                                                                }}
+                                                            >
+
+                                                                <Typography
+                                                                    fontWeight="bold"
+                                                                >
+                                                                    Média do{' '}
+                                                                    {
+                                                                        bimestre
+                                                                    }:
+                                                                </Typography>
+
+                                                                <Typography
+                                                                    variant="h6"
+                                                                    fontWeight="bold"
+                                                                >
+                                                                    {calcularMedia(
+                                                                        notasDoBimestre.map(
+                                                                            (
+                                                                                item
+                                                                            ) =>
+                                                                                item.nota
+                                                                        )
+                                                                    ).toFixed(
+                                                                        2
+                                                                    )}
+                                                                </Typography>
+
+                                                            </Box>
+
+                                                        </>
+
+                                                    )}
 
                                                 </Box>
 
-                                            </Box>
-                                        );
-                                    })}
-
+                                            );
+                                        }
+                                    )}
 
                                     <Stack
-                                        direction="row"
+                                        direction={{
+                                            xs: 'column',
+                                            sm: 'row'
+                                        }}
+
                                         justifyContent="space-between"
-                                        alignItems="center"
+                                        alignItems={{
+                                            xs: 'flex-start',
+                                            sm: 'center'
+                                        }}
+
+                                        spacing={2}
+
                                         sx={{
-                                            borderTop: '2px solid rgba(255,255,255,.25)',
+                                            borderTop:
+                                                '2px solid rgba(255,255,255,.25)',
                                             pt: 1.5,
                                             mt: 1
                                         }}
@@ -1294,13 +2092,27 @@ function Notas() {
                                             variant="h6"
                                             fontWeight="bold"
                                         >
-                                            Média Geral: {mediaGeralAluno.toFixed(2)}
+                                            Média Geral:{' '}
+                                            {
+                                                mediaGeralAluno.toFixed(
+                                                    2
+                                                )
+                                            }
                                         </Typography>
 
                                         <Chip
-                                            label={situacaoAluno.texto}
-                                            color={situacaoAluno.cor}
-                                            sx={{ fontWeight: 'bold' }}
+                                            label={
+                                                situacaoAluno.texto
+                                            }
+
+                                            color={
+                                                situacaoAluno.cor
+                                            }
+
+                                            sx={{
+                                                fontWeight:
+                                                    'bold'
+                                            }}
                                         />
 
                                     </Stack>
@@ -1318,10 +2130,7 @@ function Notas() {
             </Card>
 
         </Box>
-
     );
-
 }
-
 
 export default Notas;

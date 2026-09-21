@@ -1,37 +1,48 @@
 import { useEffect, useState } from 'react';
 
 import {
+    Alert,
     Box,
     Button,
     Card,
     CardContent,
     Grid,
-    TextField,
-    Typography,
-    Alert,
+    Paper,
+    Stack,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    Paper
+    TextField,
+    Typography
 } from '@mui/material';
 
-const API_URL = 'http://localhost:3000';
+// ======================================================
+// API
+// ======================================================
+
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    'http://localhost:3000';
 
 // ======================================================
 // AUTENTICAÇÃO
 // ======================================================
 
 function headersComToken() {
-    const token = localStorage.getItem('token');
+
+    const token =
+        localStorage.getItem('token');
 
     return {
         'Content-Type': 'application/json',
+
         ...(token
             ? {
-                Authorization: `Bearer ${token}`
+                Authorization:
+                    `Bearer ${token}`
             }
             : {})
     };
@@ -43,56 +54,103 @@ function headersComToken() {
 
 function Professores() {
 
-    const [professores, setProfessores] = useState([]);
+    // ==================================================
+    // ESTADOS
+    // ==================================================
 
-    const [nome, setNome] = useState('');
-    const [email, setEmail] = useState('');
-    const [disciplina, setDisciplina] = useState('');
+    const [professores, setProfessores] =
+        useState([]);
 
-    const [mensagem, setMensagem] = useState('');
-    const [tipoMensagem, setTipoMensagem] = useState('error');
+    const [nome, setNome] =
+        useState('');
 
-    const [editandoId, setEditandoId] = useState(null);
+    const [email, setEmail] =
+        useState('');
 
-    // ======================================================
+    const [disciplina, setDisciplina] =
+        useState('');
+
+    const [mensagem, setMensagem] =
+        useState('');
+
+    const [tipoMensagem, setTipoMensagem] =
+        useState('error');
+
+    const [editandoId, setEditandoId] =
+        useState(null);
+
+    const [filtro, setFiltro] =
+        useState('');
+
+    const [carregando, setCarregando] =
+        useState(false);
+
+    const [salvando, setSalvando] =
+        useState(false);
+
+    const [excluindoId, setExcluindoId] =
+        useState(null);
+
+    // ==================================================
     // MENSAGEM
-    // ======================================================
+    // ==================================================
 
-    function mostrarMensagem(texto, tipo = 'error') {
+    function mostrarMensagem(
+        texto,
+        tipo = 'error'
+    ) {
+
         setMensagem(texto);
         setTipoMensagem(tipo);
+
     }
 
-    // ======================================================
+    // ==================================================
     // CARREGAR PROFESSORES
-    // ======================================================
+    // ==================================================
 
     async function carregarProfessores() {
 
         try {
 
-            const resposta = await fetch(
-                `${API_URL}/professores`,
-                {
-                    headers: headersComToken()
-                }
-            );
+            setCarregando(true);
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/professores`,
+                    {
+                        method: 'GET',
+                        headers:
+                            headersComToken()
+                    }
+                );
 
             if (resposta.status === 401) {
+
                 throw new Error(
                     'Sua sessão expirou. Faça login novamente.'
                 );
             }
 
             if (!resposta.ok) {
+
+                const texto =
+                    await resposta.text();
+
                 throw new Error(
+                    texto ||
                     'Erro ao buscar professores.'
                 );
             }
 
-            const dados = await resposta.json();
+            const dados =
+                await resposta.json();
 
-            setProfessores(dados);
+            setProfessores(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
 
         } catch (erro) {
 
@@ -103,18 +161,30 @@ function Professores() {
 
             mostrarMensagem(
                 erro.message ||
-                'Não foi possível carregar os professores.'
+                'Não foi possível carregar os professores.',
+                'error'
             );
+
+        } finally {
+
+            setCarregando(false);
+
         }
     }
 
+    // ==================================================
+    // CARREGAR AO ABRIR A TELA
+    // ==================================================
+
     useEffect(() => {
+
         carregarProfessores();
+
     }, []);
 
-    // ======================================================
+    // ==================================================
     // LIMPAR FORMULÁRIO
-    // ======================================================
+    // ==================================================
 
     function limparFormulario() {
 
@@ -125,9 +195,58 @@ function Professores() {
 
     }
 
-    // ======================================================
+    // ==================================================
+    // VALIDAR FORMULÁRIO
+    // ==================================================
+
+    function validarFormulario() {
+
+        if (!nome.trim()) {
+
+            mostrarMensagem(
+                'Digite o nome do professor.',
+                'error'
+            );
+
+            return false;
+        }
+
+        if (!email.trim()) {
+
+            mostrarMensagem(
+                'Digite o e-mail do professor.',
+                'error'
+            );
+
+            return false;
+        }
+
+        if (!email.includes('@')) {
+
+            mostrarMensagem(
+                'Digite um e-mail válido.',
+                'error'
+            );
+
+            return false;
+        }
+
+        if (!disciplina.trim()) {
+
+            mostrarMensagem(
+                'Digite a disciplina do professor.',
+                'error'
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    // ==================================================
     // SALVAR PROFESSOR
-    // ======================================================
+    // ==================================================
 
     async function salvarProfessor(event) {
 
@@ -135,81 +254,58 @@ function Professores() {
 
         setMensagem('');
 
-        // ==================================================
-        // VALIDAÇÕES
-        // ==================================================
-
-        if (!nome.trim()) {
-
-            mostrarMensagem(
-                'Digite o nome do professor.'
-            );
-
+        if (!validarFormulario()) {
             return;
         }
-
-        if (!email.trim()) {
-
-            mostrarMensagem(
-                'Digite o e-mail do professor.'
-            );
-
-            return;
-        }
-
-        if (!disciplina.trim()) {
-
-            mostrarMensagem(
-                'Digite a disciplina do professor.'
-            );
-
-            return;
-        }
-
-        // ==================================================
-        // DADOS
-        // ==================================================
 
         const dadosProfessor = {
-            nome: nome.trim(),
-            email: email.trim(),
-            disciplina: disciplina.trim()
+
+            nome:
+                nome.trim(),
+
+            email:
+                email.trim(),
+
+            disciplina:
+                disciplina.trim()
         };
 
         try {
 
-            const url = editandoId
-                ? `${API_URL}/professores/${editandoId}`
-                : `${API_URL}/professores`;
+            setSalvando(true);
 
-            const metodo = editandoId
-                ? 'PUT'
-                : 'POST';
+            const url =
+                editandoId
+                    ? `${API_URL}/professores/${editandoId}`
+                    : `${API_URL}/professores`;
 
-            // ==================================================
-            // REQUISIÇÃO
-            // ==================================================
+            const metodo =
+                editandoId
+                    ? 'PUT'
+                    : 'POST';
 
-            const resposta = await fetch(
-                url,
-                {
-                    method: metodo,
-                    headers: headersComToken(),
-                    body: JSON.stringify(
-                        dadosProfessor
-                    )
-                }
-            );
+            const resposta =
+                await fetch(
+                    url,
+                    {
+                        method: metodo,
 
-            // ==================================================
-            // LER RESPOSTA
-            // ==================================================
+                        headers:
+                            headersComToken(),
+
+                        body:
+                            JSON.stringify(
+                                dadosProfessor
+                            )
+                    }
+                );
 
             let dados = {};
 
             try {
 
-                dados = await resposta.json();
+                dados =
+                    await resposta.json();
 
             } catch {
 
@@ -217,86 +313,53 @@ function Professores() {
 
             }
 
-            // ==================================================
-            // ERROS
-            // ==================================================
-
             if (!resposta.ok) {
 
-                // E-mail duplicado
                 if (
-                    resposta.status === 409 ||
-                    resposta.status === 400
+                    resposta.status === 401
                 ) {
-
-                    const mensagemServidor =
-                        dados.mensagem ||
-                        dados.erro ||
-                        '';
-
-                    if (
-                        mensagemServidor
-                            .toLowerCase()
-                            .includes('email') &&
-                        mensagemServidor
-                            .toLowerCase()
-                            .includes('unique')
-                    ) {
-
-                        throw new Error(
-                            'Já existe um professor cadastrado com este e-mail.'
-                        );
-                    }
-
-                    if (
-                        mensagemServidor
-                            .toLowerCase()
-                            .includes('duplicate')
-                    ) {
-
-                        throw new Error(
-                            'Já existe um professor cadastrado com este e-mail.'
-                        );
-                    }
-
-                    if (mensagemServidor) {
-
-                        throw new Error(
-                            mensagemServidor
-                        );
-                    }
-
-                    throw new Error(
-                        'Não foi possível salvar o professor.'
-                    );
-                }
-
-                // Não autenticado
-                if (resposta.status === 401) {
 
                     throw new Error(
                         'Você não está autenticado. Faça login novamente.'
                     );
                 }
 
-                // Sem permissão
-                if (resposta.status === 403) {
+                if (
+                    resposta.status === 403
+                ) {
 
                     throw new Error(
                         'Você não tem permissão para cadastrar ou alterar professores.'
                     );
                 }
 
-                throw new Error(
+                if (
+                    resposta.status === 409
+                ) {
+
+                    throw new Error(
+                        'Já existe um professor cadastrado com este e-mail.'
+                    );
+                }
+
+                const mensagemServidor =
                     dados.mensagem ||
                     dados.erro ||
-                    'Erro ao salvar professor.'
+                    '';
+
+                if (
+                    mensagemServidor
+                ) {
+
+                    throw new Error(
+                        mensagemServidor
+                    );
+                }
+
+                throw new Error(
+                    'Não foi possível salvar o professor.'
                 );
             }
-
-            // ==================================================
-            // SUCESSO
-            // ==================================================
 
             mostrarMensagem(
                 editandoId
@@ -318,14 +381,20 @@ function Professores() {
 
             mostrarMensagem(
                 erro.message ||
-                'Erro ao salvar o professor.'
+                'Erro ao salvar o professor.',
+                'error'
             );
+
+        } finally {
+
+            setSalvando(false);
+
         }
     }
 
-    // ======================================================
+    // ==================================================
     // EDITAR
-    // ======================================================
+    // ==================================================
 
     function editarProfessor(professor) {
 
@@ -346,11 +415,16 @@ function Professores() {
         );
 
         setMensagem('');
+
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     }
 
-    // ======================================================
+    // ==================================================
     // EXCLUIR
-    // ======================================================
+    // ==================================================
 
     async function excluirProfessor(id) {
 
@@ -365,23 +439,51 @@ function Professores() {
 
         try {
 
-            const resposta = await fetch(
-                `${API_URL}/professores/${id}`,
-                {
-                    method: 'DELETE',
-                    headers: headersComToken()
-                }
-            );
+            setExcluindoId(id);
+
+            const resposta =
+                await fetch(
+                    `${API_URL}/professores/${id}`,
+                    {
+                        method: 'DELETE',
+
+                        headers:
+                            headersComToken()
+                    }
+                );
 
             let dados = {};
 
             try {
-                dados = await resposta.json();
+
+                dados =
+                    await resposta.json();
+
             } catch {
+
                 dados = {};
+
             }
 
             if (!resposta.ok) {
+
+                if (
+                    resposta.status === 401
+                ) {
+
+                    throw new Error(
+                        'Sua sessão expirou. Faça login novamente.'
+                    );
+                }
+
+                if (
+                    resposta.status === 403
+                ) {
+
+                    throw new Error(
+                        'Você não tem permissão para excluir professores.'
+                    );
+                }
 
                 throw new Error(
                     dados.mensagem ||
@@ -406,21 +508,70 @@ function Professores() {
 
             mostrarMensagem(
                 erro.message ||
-                'Erro ao excluir o professor.'
+                'Erro ao excluir o professor.',
+                'error'
             );
+
+        } finally {
+
+            setExcluindoId(null);
+
         }
     }
 
-    // ======================================================
+    // ==================================================
+    // FILTRO
+    // ==================================================
+
+    const professoresFiltrados =
+        professores.filter(
+            (professor) => {
+
+                const texto =
+                    filtro
+                        .toLowerCase()
+                        .trim();
+
+                if (!texto) {
+                    return true;
+                }
+
+                return [
+
+                    professor.id,
+
+                    professor.nome,
+
+                    professor.email,
+
+                    professor.disciplina
+
+                ].some(
+                    (valor) =>
+                        String(
+                            valor ?? ''
+                        )
+                            .toLowerCase()
+                            .includes(texto)
+                );
+            }
+        );
+
+    // ==================================================
     // INTERFACE
-    // ======================================================
+    // ==================================================
 
     return (
 
         <Box>
 
+            {/* ==========================================
+                TÍTULO
+            ========================================== */}
+
             <Typography
                 variant="h4"
+                fontWeight="bold"
                 gutterBottom
             >
                 Cadastro de Professores
@@ -436,9 +587,9 @@ function Professores() {
                 da escola.
             </Typography>
 
-            {/* ==================================================
+            {/* ==========================================
                 MENSAGEM
-            ================================================== */}
+            ========================================== */}
 
             {mensagem && (
 
@@ -447,15 +598,19 @@ function Professores() {
                     sx={{
                         mb: 3
                     }}
+
+                    onClose={() =>
+                        setMensagem('')
+                    }
                 >
                     {mensagem}
                 </Alert>
 
             )}
 
-            {/* ==================================================
+            {/* ==========================================
                 FORMULÁRIO
-            ================================================== */}
+            ========================================== */}
 
             <Card
                 sx={{
@@ -467,8 +622,9 @@ function Professores() {
 
                     <Typography
                         variant="h6"
+                        fontWeight="bold"
                         sx={{
-                            mb: 2
+                            mb: 3
                         }}
                     >
                         {editandoId
@@ -478,7 +634,9 @@ function Professores() {
 
                     <Box
                         component="form"
-                        onSubmit={salvarProfessor}
+                        onSubmit={
+                            salvarProfessor
+                        }
                     >
 
                         <Grid
@@ -496,12 +654,23 @@ function Professores() {
 
                                 <TextField
                                     fullWidth
+                                    required
+
                                     label="Nome do professor"
+
                                     value={nome}
-                                    onChange={(event) =>
-                                        setNome(
-                                            event.target.value
-                                        )
+
+                                    onChange={
+                                        (event) =>
+                                            setNome(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                    }
+
+                                    disabled={
+                                        salvando
                                     }
                                 />
 
@@ -517,13 +686,25 @@ function Professores() {
 
                                 <TextField
                                     fullWidth
+                                    required
+
                                     label="E-mail"
+
                                     type="email"
+
                                     value={email}
-                                    onChange={(event) =>
-                                        setEmail(
-                                            event.target.value
-                                        )
+
+                                    onChange={
+                                        (event) =>
+                                            setEmail(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                    }
+
+                                    disabled={
+                                        salvando
                                     }
                                 />
 
@@ -539,12 +720,23 @@ function Professores() {
 
                                 <TextField
                                     fullWidth
+                                    required
+
                                     label="Disciplina"
+
                                     value={disciplina}
-                                    onChange={(event) =>
-                                        setDisciplina(
-                                            event.target.value
-                                        )
+
+                                    onChange={
+                                        (event) =>
+                                            setDisciplina(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                    }
+
+                                    disabled={
+                                        salvando
                                     }
                                 />
 
@@ -557,30 +749,48 @@ function Professores() {
                                 xs={12}
                             >
 
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    sx={{
-                                        mr: 2
+                                <Stack
+                                    direction={{
+                                        xs: 'column',
+                                        sm: 'row'
                                     }}
+                                    spacing={2}
                                 >
-                                    {editandoId
-                                        ? 'Atualizar Professor'
-                                        : 'Salvar Professor'}
-                                </Button>
-
-                                {editandoId && (
 
                                     <Button
-                                        variant="outlined"
-                                        onClick={
-                                            limparFormulario
+                                        type="submit"
+                                        variant="contained"
+
+                                        disabled={
+                                            salvando
                                         }
                                     >
-                                        Cancelar
+                                        {salvando
+                                            ? 'Salvando...'
+                                            : editandoId
+                                                ? 'Atualizar Professor'
+                                                : 'Salvar Professor'}
                                     </Button>
 
-                                )}
+                                    {editandoId && (
+
+                                        <Button
+                                            variant="outlined"
+
+                                            disabled={
+                                                salvando
+                                            }
+
+                                            onClick={
+                                                limparFormulario
+                                            }
+                                        >
+                                            Cancelar
+                                        </Button>
+
+                                    )}
+
+                                </Stack>
 
                             </Grid>
 
@@ -592,12 +802,72 @@ function Professores() {
 
             </Card>
 
-            {/* ==================================================
+            {/* ==========================================
+                FILTRO
+            ========================================== */}
+
+            <Card
+                sx={{
+                    mb: 4
+                }}
+            >
+
+                <CardContent>
+
+                    <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        sx={{
+                            mb: 2
+                        }}
+                    >
+                        Pesquisar professores
+                    </Typography>
+
+                    <TextField
+                        fullWidth
+
+                        label="Pesquisar"
+
+                        placeholder={
+                            'Nome, e-mail ou disciplina'
+                        }
+
+                        value={
+                            filtro
+                        }
+
+                        onChange={
+                            (event) =>
+                                setFiltro(
+                                    event.target.value
+                                )
+                        }
+                    />
+
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                            mt: 2
+                        }}
+                    >
+                        {professoresFiltrados.length}
+                        {' '}
+                        professor(es) encontrado(s)
+                    </Typography>
+
+                </CardContent>
+
+            </Card>
+
+            {/* ==========================================
                 LISTA
-            ================================================== */}
+            ========================================== */}
 
             <Typography
                 variant="h5"
+                fontWeight="bold"
                 gutterBottom
             >
                 Professores Cadastrados
@@ -614,23 +884,33 @@ function Professores() {
                         <TableRow>
 
                             <TableCell>
-                                <strong>ID</strong>
+                                <strong>
+                                    ID
+                                </strong>
                             </TableCell>
 
                             <TableCell>
-                                <strong>Nome</strong>
+                                <strong>
+                                    Nome
+                                </strong>
                             </TableCell>
 
                             <TableCell>
-                                <strong>E-mail</strong>
+                                <strong>
+                                    E-mail
+                                </strong>
                             </TableCell>
 
                             <TableCell>
-                                <strong>Disciplina</strong>
+                                <strong>
+                                    Disciplina
+                                </strong>
                             </TableCell>
 
-                            <TableCell>
-                                <strong>Ações</strong>
+                            <TableCell align="center">
+                                <strong>
+                                    Ações
+                                </strong>
                             </TableCell>
 
                         </TableRow>
@@ -639,7 +919,7 @@ function Professores() {
 
                     <TableBody>
 
-                        {professores.length === 0 ? (
+                        {carregando ? (
 
                             <TableRow>
 
@@ -647,65 +927,131 @@ function Professores() {
                                     colSpan={5}
                                     align="center"
                                 >
-                                    Nenhum professor cadastrado.
+
+                                    <Typography
+                                        sx={{
+                                            py: 4
+                                        }}
+                                    >
+                                        Carregando professores...
+                                    </Typography>
+
+                                </TableCell>
+
+                            </TableRow>
+
+                        ) : professoresFiltrados.length === 0 ? (
+
+                            <TableRow>
+
+                                <TableCell
+                                    colSpan={5}
+                                    align="center"
+                                >
+
+                                    <Typography
+                                        color="text.secondary"
+                                        sx={{
+                                            py: 4
+                                        }}
+                                    >
+                                        {filtro
+                                            ? 'Nenhum professor encontrado para esta pesquisa.'
+                                            : 'Nenhum professor cadastrado.'}
+                                    </Typography>
+
                                 </TableCell>
 
                             </TableRow>
 
                         ) : (
 
-                            professores.map(
+                            professoresFiltrados.map(
                                 (professor) => (
 
                                     <TableRow
-                                        key={professor.id}
+                                        key={
+                                            professor.id
+                                        }
+                                        hover
                                     >
 
                                         <TableCell>
-                                            {professor.id}
+                                            {
+                                                professor.id
+                                            }
                                         </TableCell>
 
                                         <TableCell>
-                                            {professor.nome}
+                                            {
+                                                professor.nome
+                                            }
                                         </TableCell>
 
                                         <TableCell>
-                                            {professor.email}
+                                            {
+                                                professor.email
+                                            }
                                         </TableCell>
 
                                         <TableCell>
-                                            {professor.disciplina}
+                                            {
+                                                professor.disciplina
+                                            }
                                         </TableCell>
 
                                         <TableCell>
 
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{
-                                                    mr: 1
+                                            <Stack
+                                                direction={{
+                                                    xs: 'column',
+                                                    sm: 'row'
                                                 }}
-                                                onClick={() =>
-                                                    editarProfessor(
-                                                        professor
-                                                    )
-                                                }
+                                                spacing={1}
+                                                justifyContent="center"
                                             >
-                                                Editar
-                                            </Button>
 
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                variant="outlined"
-                                                onClick={() =>
-                                                    excluirProfessor(
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+
+                                                    onClick={() =>
+                                                        editarProfessor(
+                                                            professor
+                                                        )
+                                                    }
+
+                                                    disabled={
+                                                        salvando ||
+                                                        excluindoId !== null
+                                                    }
+                                                >
+                                                    Editar
+                                                </Button>
+
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    variant="outlined"
+
+                                                    onClick={() =>
+                                                        excluirProfessor(
+                                                            professor.id
+                                                        )
+                                                    }
+
+                                                    disabled={
+                                                        salvando ||
+                                                        excluindoId !== null
+                                                    }
+                                                >
+                                                    {excluindoId ===
                                                         professor.id
-                                                    )
-                                                }
-                                            >
-                                                Excluir
-                                            </Button>
+                                                        ? 'Excluindo...'
+                                                        : 'Excluir'}
+                                                </Button>
+
+                                            </Stack>
 
                                         </TableCell>
 
@@ -723,7 +1069,6 @@ function Professores() {
             </TableContainer>
 
         </Box>
-
     );
 }
 

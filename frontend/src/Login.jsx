@@ -123,23 +123,27 @@ export default function Login({ onLogin }) {
              * Não mostrar token no console.
              */
 
+            // Limpa sessões antigas antes de salvar a nova sessão.
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuario');
+            localStorage.removeItem('usuarioLogado');
+            localStorage.removeItem('professorLogado');
+
+            // Salva o token usado pelas rotas protegidas.
             localStorage.setItem(
                 'token',
                 dados.token
             );
 
+            // Compatibilidade com as versões do sistema.
             localStorage.setItem(
-                'usuario',
+                'usuarioLogado',
                 JSON.stringify(usuario)
             );
 
-            /*
-             * Compatibilidade com versões
-             * anteriores do sistema.
-             */
-
-            localStorage.removeItem(
-                'professorLogado'
+            localStorage.setItem(
+                'usuario',
+                JSON.stringify(usuario)
             );
 
             console.log(

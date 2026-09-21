@@ -22,14 +22,23 @@ import Turmas from './Turmas.jsx';
 import Disciplinas from './Disciplinas.jsx';
 import Notas from './Notas.jsx';
 import Auditoria from './Auditoria.jsx';
+import Dashboard from './Dashboard.jsx';
 
 
-const API_URL = 'http://localhost:3000';
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    'http://localhost:3000';
+
 
 const drawerWidth = 240;
 
 
+// ======================================================
+// MENU
+// ======================================================
+
 const menuItems = [
+
     {
         key: 'inicio',
         label: 'Início',
@@ -92,33 +101,61 @@ const menuItems = [
         description: 'Histórico de operações do sistema',
         perfis: ['admin']
     }
+
 ];
 
 
+// ======================================================
+// USUÁRIO SALVO
+// ======================================================
+
 function obterUsuarioSalvo() {
+
     try {
-        const valor = localStorage.getItem('usuarioLogado');
+
+        const valor =
+            localStorage.getItem('usuarioLogado');
 
         return valor
             ? JSON.parse(valor)
             : null;
 
     } catch {
+
         return null;
+
     }
+
 }
 
+
+// ======================================================
+// TOKEN
+// ======================================================
 
 function obterToken() {
+
     return localStorage.getItem('token');
+
 }
 
+
+// ======================================================
+// LIMPAR SESSÃO
+// ======================================================
 
 function limparSessao() {
+
     localStorage.removeItem('token');
+
     localStorage.removeItem('usuarioLogado');
+
 }
 
+
+// ======================================================
+// APP
+// ======================================================
 
 function App() {
 
@@ -127,7 +164,8 @@ function App() {
     );
 
 
-    const [view, setView] = useState('inicio');
+    const [view, setView] =
+        useState('inicio');
 
 
     const [validandoSessao, setValidandoSessao] =
@@ -136,8 +174,13 @@ function App() {
         );
 
 
-    const token = obterToken();
+    const token =
+        obterToken();
 
+
+    // ==================================================
+    // VALIDAR SESSÃO
+    // ==================================================
 
     useEffect(() => {
 
@@ -155,11 +198,13 @@ function App() {
                 if (ativo) {
 
                     setValidandoSessao(false);
+
                     setUsuario(null);
 
                 }
 
                 return;
+
             }
 
 
@@ -183,10 +228,13 @@ function App() {
 
 
                     if (ativo) {
+
                         setUsuario(null);
+
                     }
 
                     return;
+
                 }
 
 
@@ -210,6 +258,7 @@ function App() {
                             dados.usuario
                         )
                     );
+
                 }
 
 
@@ -246,6 +295,10 @@ function App() {
     }, []);
 
 
+    // ==================================================
+    // MENU PERMITIDO
+    // ==================================================
+
     const menuPermitido =
         useMemo(() => {
 
@@ -265,6 +318,10 @@ function App() {
 
         }, [usuario]);
 
+
+    // ==================================================
+    // GARANTIR VIEW PERMITIDA
+    // ==================================================
 
     useEffect(() => {
 
@@ -295,6 +352,10 @@ function App() {
     ]);
 
 
+    // ==================================================
+    // LOGIN
+    // ==================================================
+
     function handleLogin(usuarioLogado) {
 
         if (!usuarioLogado) {
@@ -317,50 +378,111 @@ function App() {
     }
 
 
+    // ==================================================
+    // LOGOUT
+    // ==================================================
+
     function handleLogout() {
 
         limparSessao();
 
+
         setUsuario(null);
+
 
         setView('inicio');
 
     }
 
 
+    // ==================================================
+    // CONTEÚDO
+    // ==================================================
+
     function renderConteudo() {
 
         switch (view) {
 
+            // ------------------------------------------
+            // DASHBOARD
+            // ------------------------------------------
+
+            case 'inicio':
+
+                return (
+                    <Dashboard />
+                );
+
+
+            // ------------------------------------------
+            // ALUNOS
+            // ------------------------------------------
+
             case 'alunos':
 
-                return <Alunos />;
+                return (
+                    <Alunos />
+                );
 
+
+            // ------------------------------------------
+            // PROFESSORES
+            // ------------------------------------------
 
             case 'professores':
 
-                return <Professores />;
+                return (
+                    <Professores />
+                );
 
+
+            // ------------------------------------------
+            // TURMAS
+            // ------------------------------------------
 
             case 'turmas':
 
-                return <Turmas />;
+                return (
+                    <Turmas />
+                );
 
+
+            // ------------------------------------------
+            // DISCIPLINAS
+            // ------------------------------------------
 
             case 'disciplinas':
 
-                return <Disciplinas />;
+                return (
+                    <Disciplinas />
+                );
 
+
+            // ------------------------------------------
+            // NOTAS
+            // ------------------------------------------
 
             case 'notas':
 
-                return <Notas />;
+                return (
+                    <Notas />
+                );
 
+
+            // ------------------------------------------
+            // AUDITORIA
+            // ------------------------------------------
 
             case 'auditoria':
 
-                return <Auditoria />;
+                return (
+                    <Auditoria />
+                );
 
+
+            // ------------------------------------------
+            // FINANCEIRO
+            // ------------------------------------------
 
             case 'financeiro':
 
@@ -385,6 +507,10 @@ function App() {
                 );
 
 
+            // ------------------------------------------
+            // RELATÓRIOS
+            // ------------------------------------------
+
             case 'relatorios':
 
                 return (
@@ -408,79 +534,24 @@ function App() {
                 );
 
 
-            case 'inicio':
+            // ------------------------------------------
+            // PADRÃO
+            // ------------------------------------------
 
             default:
 
                 return (
-
-                    <Box>
-
-                        <Typography
-                            variant="h4"
-                            gutterBottom
-                        >
-                            Sistema Escolar
-                        </Typography>
-
-
-                        <Typography
-                            sx={{ mb: 1 }}
-                        >
-                            Bem-vindo ao sistema de
-                            gerenciamento escolar.
-                        </Typography>
-
-
-                        {usuario && (
-
-                            <Typography
-                                sx={{ mb: 3 }}
-                            >
-
-                                Usuário:{' '}
-
-                                <strong>
-                                    {usuario.nome}
-                                </strong>
-
-                                {' — '}
-
-                                Perfil:{' '}
-
-                                <strong>
-                                    {usuario.perfil}
-                                </strong>
-
-                            </Typography>
-
-                        )}
-
-
-                        <Button
-                            variant="contained"
-                            onClick={() =>
-                                setView('alunos')
-                            }
-                            disabled={
-                                !menuPermitido.some(
-                                    (item) =>
-                                        item.key ===
-                                        'alunos'
-                                )
-                            }
-                        >
-                            Acessar Alunos
-                        </Button>
-
-                    </Box>
-
+                    <Dashboard />
                 );
 
         }
 
     }
 
+
+    // ==================================================
+    // VALIDANDO SESSÃO
+    // ==================================================
 
     if (validandoSessao) {
 
@@ -506,6 +577,10 @@ function App() {
     }
 
 
+    // ==================================================
+    // LOGIN
+    // ==================================================
+
     if (!token || !usuario) {
 
         return (
@@ -516,6 +591,10 @@ function App() {
 
     }
 
+
+    // ==================================================
+    // SISTEMA
+    // ==================================================
 
     return (
 
@@ -528,6 +607,10 @@ function App() {
 
             <CssBaseline />
 
+
+            {/* ==========================================
+                BARRA SUPERIOR
+            ========================================== */}
 
             <AppBar
                 position="fixed"
@@ -593,6 +676,10 @@ function App() {
 
             </AppBar>
 
+
+            {/* ==========================================
+                MENU LATERAL
+            ========================================== */}
 
             <Drawer
                 variant="permanent"
@@ -665,6 +752,10 @@ function App() {
             </Drawer>
 
 
+            {/* ==========================================
+                CONTEÚDO PRINCIPAL
+            ========================================== */}
+
             <Box
                 component="main"
                 sx={{
@@ -687,6 +778,7 @@ function App() {
         </Box>
 
     );
+
 }
 
 

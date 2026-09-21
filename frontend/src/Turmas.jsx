@@ -1,17 +1,5 @@
 import { useEffect, useState } from 'react';
 
-
-const API_URL = 'http://localhost:3000';
-
-function headersComToken() {
-    const token = localStorage.getItem('token');
-
-    return {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-    };
-}
-
 import {
     Alert,
     Box,
@@ -38,6 +26,30 @@ import {
     Typography
 } from '@mui/material';
 
+// ======================================================
+// API
+// ======================================================
+
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    'http://localhost:3000';
+
+// ======================================================
+// HEADERS COM TOKEN
+// ======================================================
+
+function headersComToken() {
+    const token = localStorage.getItem('token');
+
+    return {
+        'Content-Type': 'application/json',
+        ...(token
+            ? {
+                Authorization: `Bearer ${token}`
+            }
+            : {})
+    };
+}
 
 // ======================================================
 // FORMULÁRIO INICIAL
@@ -50,24 +62,30 @@ const formularioInicial = {
     professor: ''
 };
 
-
 // ======================================================
 // COMPONENTE
 // ======================================================
 
 function Turma() {
 
-    const [form, setForm] = useState(
-        formularioInicial
-    );
+    // ==================================================
+    // ESTADOS
+    // ==================================================
 
-    const [turmas, setTurmas] = useState([]);
+    const [form, setForm] =
+        useState(formularioInicial);
 
-    const [alunos, setAlunos] = useState([]);
+    const [turmas, setTurmas] =
+        useState([]);
 
-    const [filtro, setFiltro] = useState('');
+    const [alunos, setAlunos] =
+        useState([]);
 
-    const [mensagem, setMensagem] = useState('');
+    const [filtro, setFiltro] =
+        useState('');
+
+    const [mensagem, setMensagem] =
+        useState('');
 
     const [tipoMensagem, setTipoMensagem] =
         useState('success');
@@ -84,6 +102,26 @@ function Turma() {
     const [linhasPorPagina, setLinhasPorPagina] =
         useState(5);
 
+    const [carregando, setCarregando] =
+        useState(false);
+
+    const [salvando, setSalvando] =
+        useState(false);
+
+    const [excluindo, setExcluindo] =
+        useState(false);
+
+    // ==================================================
+    // MENSAGEM
+    // ==================================================
+
+    function mostrarMensagem(
+        texto,
+        tipo = 'success'
+    ) {
+        setMensagem(texto);
+        setTipoMensagem(tipo);
+    }
 
     // ==================================================
     // CARREGAR TURMAS
@@ -93,41 +131,55 @@ function Turma() {
 
         try {
 
-            const resposta = await fetch(
-                'http://localhost:3000/turmas',
-                { headers: headersComToken() }
-            );
+            setCarregando(true);
 
+            const resposta = await fetch(
+                `${API_URL}/turmas`,
+                {
+                    method: 'GET',
+                    headers: headersComToken()
+                }
+            );
 
             if (!resposta.ok) {
 
+                const erro =
+                    await resposta.text();
+
                 throw new Error(
+                    erro ||
                     'Erro ao carregar turmas.'
                 );
-
             }
-
 
             const dados =
                 await resposta.json();
 
-
-            setTurmas(dados);
-
+            setTurmas(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao carregar turmas:',
+                erro
+            );
 
             mostrarMensagem(
-                erro.message,
+                erro.message ||
+                'Erro ao carregar turmas.',
                 'error'
             );
 
+        } finally {
+
+            setCarregando(false);
+
         }
-
     }
-
 
     // ==================================================
     // CARREGAR ALUNOS
@@ -138,35 +190,42 @@ function Turma() {
         try {
 
             const resposta = await fetch(
-                'http://localhost:3000/alunos',
-                { headers: headersComToken() }
+                `${API_URL}/alunos`,
+                {
+                    method: 'GET',
+                    headers: headersComToken()
+                }
             );
-
 
             if (!resposta.ok) {
 
+                const erro =
+                    await resposta.text();
+
                 throw new Error(
+                    erro ||
                     'Erro ao carregar alunos.'
                 );
-
             }
-
 
             const dados =
                 await resposta.json();
 
-
-            setAlunos(dados);
-
+            setAlunos(
+                Array.isArray(dados)
+                    ? dados
+                    : []
+            );
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao carregar alunos:',
+                erro
+            );
 
         }
-
     }
-
 
     // ==================================================
     // CARREGAR TUDO
@@ -175,27 +234,9 @@ function Turma() {
     useEffect(() => {
 
         carregarTurmas();
-
         carregarAlunos();
 
     }, []);
-
-
-    // ==================================================
-    // MENSAGEM
-    // ==================================================
-
-    function mostrarMensagem(
-        texto,
-        tipo = 'success'
-    ) {
-
-        setMensagem(texto);
-
-        setTipoMensagem(tipo);
-
-    }
-
 
     // ==================================================
     // ALTERAR FORMULÁRIO
@@ -208,19 +249,69 @@ function Turma() {
             value
         } = event.target;
 
-
         setForm(
             (formularioAnterior) => ({
-
                 ...formularioAnterior,
-
                 [name]: value
-
             })
         );
-
     }
 
+    // ==================================================
+    // VALIDAR FORMULÁRIO
+    // ==================================================
+
+    function validarFormulario(dados) {
+
+        if (!dados.serie) {
+
+            mostrarMensagem(
+                'Selecione a série.',
+                'error'
+            );
+
+            return false;
+        }
+
+        if (!dados.letra) {
+
+            mostrarMensagem(
+                'Selecione a turma.',
+                'error'
+            );
+
+            return false;
+        }
+
+        if (!dados.ano) {
+
+            mostrarMensagem(
+                'Informe o ano letivo.',
+                'error'
+            );
+
+            return false;
+        }
+
+        const ano =
+            Number(dados.ano);
+
+        if (
+            !Number.isInteger(ano) ||
+            ano < 2000 ||
+            ano > 2100
+        ) {
+
+            mostrarMensagem(
+                'Informe um ano letivo válido entre 2000 e 2100.',
+                'error'
+            );
+
+            return false;
+        }
+
+        return true;
+    }
 
     // ==================================================
     // CADASTRAR TURMA
@@ -230,117 +321,85 @@ function Turma() {
 
         event.preventDefault();
 
-
-        if (!form.serie) {
-
-            mostrarMensagem(
-                'Selecione a série.',
-                'error'
-            );
-
+        if (!validarFormulario(form)) {
             return;
         }
-
-
-        if (!form.letra) {
-
-            mostrarMensagem(
-                'Selecione a turma A, B ou C.',
-                'error'
-            );
-
-            return;
-        }
-
-
-        if (!form.ano) {
-
-            mostrarMensagem(
-                'Informe o ano letivo.',
-                'error'
-            );
-
-            return;
-        }
-
-
-        // ----------------------------------------------
-        // O NOME É GERADO AUTOMATICAMENTE
-        // ----------------------------------------------
 
         const nome =
             `${form.serie} ${form.letra}`;
 
-
         try {
 
+            setSalvando(true);
+
             const resposta = await fetch(
-                'http://localhost:3000/turmas',
+                `${API_URL}/turmas`,
                 {
                     method: 'POST',
 
-                    headers: headersComToken(),
+                    headers:
+                        headersComToken(),
 
                     body: JSON.stringify({
+                        nome,
 
-                        nome: nome,
+                        serie:
+                            form.serie,
 
-                        serie: form.serie,
+                        letra:
+                            form.letra,
 
-                        letra: form.letra,
-
-                        ano: Number(form.ano),
+                        ano:
+                            Number(form.ano),
 
                         professor:
-                            form.professor ||
+                            form.professor.trim() ||
                             null
-
                     })
                 }
             );
-
 
             if (!resposta.ok) {
 
                 const erro =
                     await resposta.text();
 
-
                 throw new Error(
                     erro ||
                     'Erro ao salvar turma.'
                 );
-
             }
-
 
             mostrarMensagem(
                 'Turma cadastrada com sucesso!',
                 'success'
             );
 
-
             setForm(
                 formularioInicial
             );
 
-
             await carregarTurmas();
-
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao cadastrar turma:',
+                erro
+            );
 
             mostrarMensagem(
-                erro.message,
+                erro.message ||
+                'Erro ao salvar turma.',
                 'error'
             );
 
+        } finally {
+
+            setSalvando(false);
+
         }
-
     }
-
 
     // ==================================================
     // NOME DA TURMA
@@ -349,20 +408,15 @@ function Turma() {
     function nomeDaTurma(turma) {
 
         if (turma.nome) {
-
             return turma.nome;
-
         }
-
 
         return `${turma.serie || ''} ${turma.letra || ''}`
             .trim();
-
     }
 
-
     // ==================================================
-    // CONTAR ALUNOS
+    // QUANTIDADE DE ALUNOS
     // ==================================================
 
     function quantidadeAlunos(turmaId) {
@@ -372,9 +426,7 @@ function Turma() {
                 Number(aluno.fk_turma) ===
                 Number(turmaId)
         ).length;
-
     }
-
 
     // ==================================================
     // FILTRO GLOBAL
@@ -388,34 +440,21 @@ function Turma() {
                     .toLowerCase()
                     .trim();
 
-
             if (!texto) {
-
                 return true;
-
             }
 
-
             const valores = [
-
                 turma.id,
-
                 turma.nome,
-
                 turma.serie,
-
                 turma.letra,
-
                 turma.ano,
-
                 turma.professor,
-
                 quantidadeAlunos(
                     turma.id
                 )
-
             ];
-
 
             return valores.some(
                 (valor) =>
@@ -423,34 +462,30 @@ function Turma() {
                         .toLowerCase()
                         .includes(texto)
             );
-
         });
-
 
     // ==================================================
     // PAGINAÇÃO
     // ==================================================
 
+    const inicio =
+        pagina * linhasPorPagina;
+
+    const fim =
+        inicio + linhasPorPagina;
+
     const turmasDaPagina =
         turmasFiltradas.slice(
-
-            pagina * linhasPorPagina,
-
-            pagina * linhasPorPagina +
-            linhasPorPagina
-
+            inicio,
+            fim
         );
-
 
     function mudarPagina(
         event,
         novaPagina
     ) {
-
         setPagina(novaPagina);
-
     }
-
 
     function mudarLinhasPorPagina(event) {
 
@@ -459,9 +494,7 @@ function Turma() {
         );
 
         setPagina(0);
-
     }
-
 
     // ==================================================
     // ABRIR EDIÇÃO
@@ -473,21 +506,22 @@ function Turma() {
 
             id: turma.id,
 
-            nome: turma.nome || '',
+            nome:
+                turma.nome || '',
 
-            serie: turma.serie || '',
+            serie:
+                turma.serie || '',
 
-            letra: turma.letra || '',
+            letra:
+                turma.letra || '',
 
-            ano: turma.ano || '',
+            ano:
+                turma.ano || '',
 
             professor:
                 turma.professor || ''
-
         });
-
     }
-
 
     // ==================================================
     // ALTERAR EDIÇÃO
@@ -500,19 +534,13 @@ function Turma() {
             value
         } = event.target;
 
-
         setTurmaEditando(
             (turmaAnterior) => ({
-
                 ...turmaAnterior,
-
                 [name]: value
-
             })
         );
-
     }
-
 
     // ==================================================
     // SALVAR EDIÇÃO
@@ -521,131 +549,94 @@ function Turma() {
     async function salvarEdicao() {
 
         if (!turmaEditando) {
-
             return;
-
         }
 
-
-        if (!turmaEditando.serie) {
-
-            mostrarMensagem(
-                'Selecione a série.',
-                'error'
-            );
-
+        if (
+            !validarFormulario(
+                turmaEditando
+            )
+        ) {
             return;
-
         }
-
-
-        if (!turmaEditando.letra) {
-
-            mostrarMensagem(
-                'Selecione a turma.',
-                'error'
-            );
-
-            return;
-
-        }
-
-
-        if (!turmaEditando.ano) {
-
-            mostrarMensagem(
-                'Informe o ano letivo.',
-                'error'
-            );
-
-            return;
-
-        }
-
-
-        // ----------------------------------------------
-        // GERA O NOME NOVAMENTE
-        // ----------------------------------------------
 
         const nome =
             `${turmaEditando.serie} ${turmaEditando.letra}`;
 
-
         try {
 
-            const resposta = await fetch(
+            setSalvando(true);
 
-                `http://localhost:3000/turmas/${turmaEditando.id}`,
+            const resposta =
+                await fetch(
+                    `${API_URL}/turmas/${turmaEditando.id}`,
+                    {
+                        method: 'PUT',
 
-                {
-                    method: 'PUT',
+                        headers:
+                            headersComToken(),
 
-                    headers: headersComToken(),
+                        body: JSON.stringify({
 
-                    body: JSON.stringify({
+                            nome,
 
-                        nome: nome,
+                            serie:
+                                turmaEditando.serie,
 
-                        serie:
-                            turmaEditando.serie,
+                            letra:
+                                turmaEditando.letra,
 
-                        letra:
-                            turmaEditando.letra,
+                            ano:
+                                Number(
+                                    turmaEditando.ano
+                                ),
 
-                        ano:
-                            Number(
-                                turmaEditando.ano
-                            ),
-
-                        professor:
-                            turmaEditando.professor ||
-                            null
-
-                    })
-                }
-
-            );
-
+                            professor:
+                                turmaEditando.professor
+                                    ?.trim() || null
+                        })
+                    }
+                );
 
             if (!resposta.ok) {
 
                 const erro =
                     await resposta.text();
 
-
                 throw new Error(
                     erro ||
                     'Erro ao editar turma.'
                 );
-
             }
-
 
             mostrarMensagem(
                 'Alterações salvas com sucesso!',
                 'success'
             );
 
-
             setTurmaEditando(null);
-
 
             await carregarTurmas();
 
-
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao editar turma:',
+                erro
+            );
 
             mostrarMensagem(
-                erro.message,
+                erro.message ||
+                'Erro ao editar turma.',
                 'error'
             );
 
+        } finally {
+
+            setSalvando(false);
+
         }
-
     }
-
 
     // ==================================================
     // ABRIR EXCLUSÃO
@@ -654,9 +645,7 @@ function Turma() {
     function abrirExclusao(turma) {
 
         setTurmaExcluir(turma);
-
     }
-
 
     // ==================================================
     // EXCLUIR TURMA
@@ -665,67 +654,63 @@ function Turma() {
     async function confirmarExclusao() {
 
         if (!turmaExcluir) {
-
             return;
-
         }
-
 
         try {
 
-            const resposta = await fetch(
+            setExcluindo(true);
 
-                `http://localhost:3000/turmas/${turmaExcluir.id}`,
-
-                {
-                    method: 'DELETE',
-                    headers: headersComToken()
-                }
-
-            );
-
+            const resposta =
+                await fetch(
+                    `${API_URL}/turmas/${turmaExcluir.id}`,
+                    {
+                        method: 'DELETE',
+                        headers:
+                            headersComToken()
+                    }
+                );
 
             if (!resposta.ok) {
 
                 const erro =
                     await resposta.text();
 
-
                 throw new Error(
                     erro ||
                     'Erro ao excluir turma.'
                 );
-
             }
-
 
             mostrarMensagem(
                 'Turma excluída com sucesso!',
                 'success'
             );
 
-
             setTurmaExcluir(null);
 
-
             await carregarTurmas();
-
             await carregarAlunos();
-
 
         } catch (erro) {
 
-            console.error(erro);
+            console.error(
+                'Erro ao excluir turma:',
+                erro
+            );
 
             mostrarMensagem(
-                erro.message,
+                erro.message ||
+                'Erro ao excluir turma.',
                 'error'
             );
 
+        } finally {
+
+            setExcluindo(false);
+
         }
-
     }
-
 
     // ==================================================
     // RENDER
@@ -735,6 +720,10 @@ function Turma() {
 
         <Box>
 
+            {/* ==========================================
+                TÍTULO
+            ========================================== */}
+
             <Typography
                 variant="h4"
                 fontWeight="bold"
@@ -743,14 +732,12 @@ function Turma() {
                 Gestão de Turmas
             </Typography>
 
-
             <Typography
                 color="text.secondary"
                 sx={{ mb: 3 }}
             >
                 Cadastre, filtre, edite e exclua turmas.
             </Typography>
-
 
             {/* ==========================================
                 MENSAGEM
@@ -771,16 +758,11 @@ function Turma() {
 
             )}
 
-
             {/* ==========================================
                 CADASTRO
             ========================================== */}
 
-            <Card
-                sx={{
-                    mb: 4
-                }}
-            >
+            <Card sx={{ mb: 4 }}>
 
                 <CardContent>
 
@@ -791,7 +773,6 @@ function Turma() {
                     >
                         Cadastro de Turma
                     </Typography>
-
 
                     <Box
                         component="form"
@@ -853,7 +834,6 @@ function Turma() {
 
                             </Grid>
 
-
                             {/* TURMA */}
 
                             <Grid
@@ -892,10 +872,17 @@ function Turma() {
                                         C
                                     </MenuItem>
 
+                                    <MenuItem value="D">
+                                        D
+                                    </MenuItem>
+
+                                    <MenuItem value="E">
+                                        E
+                                    </MenuItem>
+
                                 </TextField>
 
                             </Grid>
-
 
                             {/* ANO */}
 
@@ -932,7 +919,6 @@ function Turma() {
 
                             </Grid>
 
-
                             {/* PROFESSOR */}
 
                             <Grid
@@ -963,7 +949,6 @@ function Turma() {
 
                         </Grid>
 
-
                         {/* BOTÕES */}
 
                         <Stack
@@ -975,14 +960,18 @@ function Turma() {
                             <Button
                                 type="submit"
                                 variant="contained"
+                                disabled={salvando}
                             >
-                                Salvar turma
+                                {salvando
+                                    ? 'Salvando...'
+                                    : 'Salvar turma'}
                             </Button>
-
 
                             <Button
                                 type="button"
                                 variant="outlined"
+
+                                disabled={salvando}
 
                                 onClick={() => {
 
@@ -1005,16 +994,11 @@ function Turma() {
 
             </Card>
 
-
             {/* ==========================================
-                FILTRO GLOBAL
+                FILTRO
             ========================================== */}
 
-            <Card
-                sx={{
-                    mb: 4
-                }}
-            >
+            <Card sx={{ mb: 4 }}>
 
                 <CardContent>
 
@@ -1026,20 +1010,16 @@ function Turma() {
                         Filtro global
                     </Typography>
 
-
                     <TextField
                         fullWidth
 
                         label="Pesquisar"
 
                         placeholder={
-                            'Pesquise por turma, série, ' +
-                            'letra, ano ou professor'
+                            'Pesquise por turma, série, letra, ano ou professor'
                         }
 
-                        value={
-                            filtro
-                        }
+                        value={filtro}
 
                         onChange={(event) => {
 
@@ -1052,7 +1032,6 @@ function Turma() {
                         }}
 
                     />
-
 
                     <Typography
                         variant="body2"
@@ -1067,7 +1046,6 @@ function Turma() {
                 </CardContent>
 
             </Card>
-
 
             {/* ==========================================
                 TABELA
@@ -1084,7 +1062,6 @@ function Turma() {
                     >
                         Turmas cadastradas
                     </Typography>
-
 
                     <TableContainer
                         component={Paper}
@@ -1149,124 +1126,9 @@ function Turma() {
 
                             </TableHead>
 
-
                             <TableBody>
 
-                                {turmasDaPagina.map(
-                                    (turma) => (
-
-                                        <TableRow
-                                            key={
-                                                turma.id
-                                            }
-                                            hover
-                                        >
-
-                                            <TableCell>
-                                                {
-                                                    turma.id
-                                                }
-                                            </TableCell>
-
-
-                                            <TableCell>
-                                                <strong>
-                                                    {
-                                                        nomeDaTurma(
-                                                            turma
-                                                        )
-                                                    }
-                                                </strong>
-                                            </TableCell>
-
-
-                                            <TableCell>
-                                                {
-                                                    turma.serie
-                                                }
-                                            </TableCell>
-
-
-                                            <TableCell>
-                                                {
-                                                    turma.letra
-                                                }
-                                            </TableCell>
-
-
-                                            <TableCell>
-                                                {
-                                                    turma.ano
-                                                }
-                                            </TableCell>
-
-
-                                            <TableCell>
-                                                {
-                                                    turma.professor ||
-                                                    'Não informado'
-                                                }
-                                            </TableCell>
-
-
-                                            <TableCell align="center">
-                                                <strong>
-                                                    {
-                                                        quantidadeAlunos(
-                                                            turma.id
-                                                        )
-                                                    }
-                                                </strong>
-                                            </TableCell>
-
-
-                                            <TableCell>
-
-                                                <Stack
-                                                    direction="row"
-                                                    spacing={1}
-                                                    justifyContent="center"
-                                                >
-
-                                                    <Button
-                                                        size="small"
-                                                        variant="outlined"
-
-                                                        onClick={() =>
-                                                            abrirEdicao(
-                                                                turma
-                                                            )
-                                                        }
-                                                    >
-                                                        Editar
-                                                    </Button>
-
-
-                                                    <Button
-                                                        size="small"
-                                                        variant="outlined"
-                                                        color="error"
-
-                                                        onClick={() =>
-                                                            abrirExclusao(
-                                                                turma
-                                                            )
-                                                        }
-                                                    >
-                                                        Excluir
-                                                    </Button>
-
-                                                </Stack>
-
-                                            </TableCell>
-
-                                        </TableRow>
-
-                                    )
-                                )}
-
-
-                                {turmasDaPagina.length === 0 && (
+                                {carregando ? (
 
                                     <TableRow>
 
@@ -1274,26 +1136,157 @@ function Turma() {
                                             colSpan={8}
                                             align="center"
                                         >
-
                                             <Typography
-                                                color="text.secondary"
                                                 sx={{
                                                     py: 4
                                                 }}
                                             >
-                                                Nenhuma turma encontrada.
+                                                Carregando turmas...
                                             </Typography>
-
                                         </TableCell>
 
                                     </TableRow>
 
+                                ) : (
+
+                                    turmasDaPagina.map(
+                                        (turma) => (
+
+                                            <TableRow
+                                                key={
+                                                    turma.id
+                                                }
+                                                hover
+                                            >
+
+                                                <TableCell>
+                                                    {
+                                                        turma.id
+                                                    }
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    <strong>
+                                                        {
+                                                            nomeDaTurma(
+                                                                turma
+                                                            )
+                                                        }
+                                                    </strong>
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    {
+                                                        turma.serie
+                                                    }
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    {
+                                                        turma.letra
+                                                    }
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    {
+                                                        turma.ano
+                                                    }
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    {
+                                                        turma.professor ||
+                                                        'Não informado'
+                                                    }
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                    <strong>
+                                                        {
+                                                            quantidadeAlunos(
+                                                                turma.id
+                                                            )
+                                                        }
+                                                    </strong>
+                                                </TableCell>
+
+                                                <TableCell>
+
+                                                    <Stack
+                                                        direction={{
+                                                            xs: 'column',
+                                                            sm: 'row'
+                                                        }}
+                                                        spacing={1}
+                                                        justifyContent="center"
+                                                    >
+
+                                                        <Button
+                                                            size="small"
+                                                            variant="outlined"
+
+                                                            onClick={() =>
+                                                                abrirEdicao(
+                                                                    turma
+                                                                )
+                                                            }
+                                                        >
+                                                            Editar
+                                                        </Button>
+
+                                                        <Button
+                                                            size="small"
+                                                            variant="outlined"
+                                                            color="error"
+
+                                                            onClick={() =>
+                                                                abrirExclusao(
+                                                                    turma
+                                                                )
+                                                            }
+                                                        >
+                                                            Excluir
+                                                        </Button>
+
+                                                    </Stack>
+
+                                                </TableCell>
+
+                                            </TableRow>
+
+                                        )
+                                    )
+
                                 )}
+
+                                {!carregando &&
+                                    turmasDaPagina.length === 0 && (
+
+                                        <TableRow>
+
+                                            <TableCell
+                                                colSpan={8}
+                                                align="center"
+                                            >
+
+                                                <Typography
+                                                    color="text.secondary"
+                                                    sx={{
+                                                        py: 4
+                                                    }}
+                                                >
+                                                    Nenhuma turma encontrada.
+                                                </Typography>
+
+                                            </TableCell>
+
+                                        </TableRow>
+
+                                    )}
 
                             </TableBody>
 
                         </Table>
-
 
                         <TablePagination
                             component="div"
@@ -1336,7 +1329,6 @@ function Turma() {
 
             </Card>
 
-
             {/* ==========================================
                 DIALOG EDITAR
             ========================================== */}
@@ -1349,6 +1341,7 @@ function Turma() {
                 }
 
                 onClose={() =>
+                    !salvando &&
                     setTurmaEditando(null)
                 }
 
@@ -1359,7 +1352,6 @@ function Turma() {
                 <DialogTitle>
                     Editar turma
                 </DialogTitle>
-
 
                 <DialogContent>
 
@@ -1414,7 +1406,6 @@ function Turma() {
 
                             </TextField>
 
-
                             {/* TURMA */}
 
                             <TextField
@@ -1447,8 +1438,15 @@ function Turma() {
                                     C
                                 </MenuItem>
 
-                            </TextField>
+                                <MenuItem value="D">
+                                    D
+                                </MenuItem>
 
+                                <MenuItem value="E">
+                                    E
+                                </MenuItem>
+
+                            </TextField>
 
                             {/* ANO */}
 
@@ -1470,8 +1468,12 @@ function Turma() {
                                     alterarEdicao
                                 }
 
-                            />
+                                inputProps={{
+                                    min: 2000,
+                                    max: 2100
+                                }}
 
+                            />
 
                             {/* PROFESSOR */}
 
@@ -1498,17 +1500,17 @@ function Turma() {
 
                 </DialogContent>
 
-
                 <DialogActions>
 
                     <Button
                         onClick={() =>
                             setTurmaEditando(null)
                         }
+
+                        disabled={salvando}
                     >
                         Cancelar
                     </Button>
-
 
                     <Button
                         variant="contained"
@@ -1516,14 +1518,17 @@ function Turma() {
                         onClick={
                             salvarEdicao
                         }
+
+                        disabled={salvando}
                     >
-                        Salvar alterações
+                        {salvando
+                            ? 'Salvando...'
+                            : 'Salvar alterações'}
                     </Button>
 
                 </DialogActions>
 
             </Dialog>
-
 
             {/* ==========================================
                 DIALOG EXCLUIR
@@ -1537,6 +1542,7 @@ function Turma() {
                 }
 
                 onClose={() =>
+                    !excluindo &&
                     setTurmaExcluir(null)
                 }
             >
@@ -1544,7 +1550,6 @@ function Turma() {
                 <DialogTitle>
                     Excluir turma
                 </DialogTitle>
-
 
                 <DialogContent>
 
@@ -1570,17 +1575,17 @@ function Turma() {
 
                 </DialogContent>
 
-
                 <DialogActions>
 
                     <Button
                         onClick={() =>
                             setTurmaExcluir(null)
                         }
+
+                        disabled={excluindo}
                     >
                         Cancelar
                     </Button>
-
 
                     <Button
                         color="error"
@@ -1589,8 +1594,12 @@ function Turma() {
                         onClick={
                             confirmarExclusao
                         }
+
+                        disabled={excluindo}
                     >
-                        Excluir
+                        {excluindo
+                            ? 'Excluindo...'
+                            : 'Excluir'}
                     </Button>
 
                 </DialogActions>
@@ -1598,10 +1607,7 @@ function Turma() {
             </Dialog>
 
         </Box>
-
     );
-
 }
-
 
 export default Turma;

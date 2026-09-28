@@ -1,6 +1,7 @@
 // backend/src/controllers/notaController.js
 // MISSÃO 003 — OPERAÇÃO BOLETIM DIGITAL
 // MISSÃO 007 — AUDITORIA DE NOTAS
+// MISSÃO 008 — PORTAL DO ALUNO
 
 import Nota from '../models/Nota.js';
 import Aluno from '../models/Aluno.js';
@@ -563,6 +564,109 @@ async function listarNotasPorAluno(req, res) {
 
 
 // ======================================================
+// LISTAR MINHAS NOTAS
+// MISSÃO 008 — PORTAL DO ALUNO
+// ======================================================
+//
+// O aluno_id é retirado do JWT.
+// Não usamos ID enviado pelo frontend.
+// Isso impede que um aluno consulte outro aluno.
+//
+// ======================================================
+
+async function listarMinhasNotas(req, res) {
+
+    try {
+
+        const alunoId = req.usuario?.aluno_id;
+
+
+        // --------------------------------------------------
+        // VERIFICA SE O USUÁRIO POSSUI ALUNO_ID
+        // --------------------------------------------------
+
+        if (!alunoId) {
+
+            return res.status(403).json({
+                erro: 'Usuário não possui aluno_id vinculado.'
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // VERIFICA SE O ALUNO EXISTE
+        // --------------------------------------------------
+
+        const aluno = await Aluno.findByPk(alunoId);
+
+        if (!aluno) {
+
+            return res.status(404).json({
+                erro: 'Aluno não encontrado.'
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // BUSCA SOMENTE AS NOTAS DO ALUNO LOGADO
+        // --------------------------------------------------
+
+        const notas = await Nota.findAll({
+
+            where: {
+                aluno_id: alunoId
+            },
+
+            order: [
+                ['disciplina', 'ASC'],
+                ['bimestre', 'ASC']
+            ]
+
+        });
+
+
+        // --------------------------------------------------
+        // RETORNA OS DADOS
+        // --------------------------------------------------
+
+        res.status(200).json({
+
+            aluno: {
+
+                id: aluno.id,
+
+                nome: aluno.nome,
+
+                turma: aluno.turma || null,
+
+                fk_turma: aluno.fk_turma || null
+
+            },
+
+            notas
+
+        });
+
+
+    } catch (erro) {
+
+        console.error(
+            'Erro ao listar minhas notas:',
+            erro
+        );
+
+        res.status(500).json({
+            erro: 'Erro interno ao listar minhas notas.'
+        });
+
+    }
+
+}
+
+
+// ======================================================
 // EXPORTAR CONTROLLER
 // ======================================================
 
@@ -576,6 +680,8 @@ export default {
 
     excluirNota,
 
-    listarNotasPorAluno
+    listarNotasPorAluno,
+
+    listarMinhasNotas
 
 };

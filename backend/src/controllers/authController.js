@@ -33,11 +33,6 @@ export async function loginProfessor(req, res) {
 
         const { usuario, senha } = req.body || {};
 
-
-        // --------------------------------------------------
-        // VALIDAR CAMPOS
-        // --------------------------------------------------
-
         if (!usuario || !senha) {
 
             return res.status(400).json({
@@ -46,36 +41,21 @@ export async function loginProfessor(req, res) {
 
         }
 
-
-        // --------------------------------------------------
-        // BUSCAR PROFESSOR
-        // --------------------------------------------------
-
         const professor = await Professor.findOne({
             where: {
                 usuario
             }
         });
 
-
-        // --------------------------------------------------
-        // PROFESSOR NÃO ENCONTRADO
-        // --------------------------------------------------
-
         if (!professor) {
 
             await registrarAuditoria({
 
                 usuario_id: null,
-
                 usuario_nome: usuario,
-
                 perfil: 'professor',
-
                 operacao: 'LOGIN_RECUSADO',
-
                 recurso: 'AUTH',
-
                 recurso_id: null,
 
                 detalhes:
@@ -83,17 +63,11 @@ export async function loginProfessor(req, res) {
 
             });
 
-
             return res.status(401).json({
                 erro: 'Usuário ou senha inválidos.'
             });
 
         }
-
-
-        // --------------------------------------------------
-        // VERIFICAR SENHA
-        // --------------------------------------------------
 
         const senhaValida =
             await bcrypt.compare(
@@ -101,25 +75,15 @@ export async function loginProfessor(req, res) {
                 professor.senha
             );
 
-
-        // --------------------------------------------------
-        // SENHA INCORRETA
-        // --------------------------------------------------
-
         if (!senhaValida) {
 
             await registrarAuditoria({
 
                 usuario_id: professor.id,
-
                 usuario_nome: professor.nome,
-
                 perfil: 'professor',
-
                 operacao: 'LOGIN_RECUSADO',
-
                 recurso: 'AUTH',
-
                 recurso_id: professor.id,
 
                 detalhes:
@@ -127,29 +91,19 @@ export async function loginProfessor(req, res) {
 
             });
 
-
             return res.status(401).json({
                 erro: 'Usuário ou senha inválidos.'
             });
 
         }
 
-
-        // --------------------------------------------------
-        // GERAR TOKEN
-        // --------------------------------------------------
-
         const token = jwt.sign(
 
             {
                 id: professor.id,
-
                 nome: professor.nome,
-
                 email: professor.email,
-
                 perfil: 'professor'
-
             },
 
             JWT_SECRET,
@@ -160,34 +114,19 @@ export async function loginProfessor(req, res) {
 
         );
 
-
-        // --------------------------------------------------
-        // AUDITORIA LOGIN SUCESSO
-        // --------------------------------------------------
-
         await registrarAuditoria({
 
             usuario_id: professor.id,
-
             usuario_nome: professor.nome,
-
             perfil: 'professor',
-
             operacao: 'LOGIN_SUCESSO',
-
             recurso: 'AUTH',
-
             recurso_id: professor.id,
 
             detalhes:
                 'Login de professor realizado com sucesso'
 
         });
-
-
-        // --------------------------------------------------
-        // RESPOSTA
-        // --------------------------------------------------
 
         return res.status(200).json({
 
@@ -199,17 +138,13 @@ export async function loginProfessor(req, res) {
             professor: {
 
                 id: professor.id,
-
                 nome: professor.nome,
-
                 email: professor.email,
-
                 perfil: 'professor'
 
             }
 
         });
-
 
     } catch (erro) {
 
@@ -217,7 +152,6 @@ export async function loginProfessor(req, res) {
             'ERRO NO LOGIN DO PROFESSOR:',
             erro
         );
-
 
         return res.status(500).json({
 
@@ -233,6 +167,7 @@ export async function loginProfessor(req, res) {
 
 // ======================================================
 // LOGIN PRINCIPAL
+// ADMIN / PROFESSOR / ALUNO
 // ======================================================
 
 export async function login(req, res) {
@@ -308,7 +243,6 @@ export async function login(req, res) {
 
             });
 
-
             return res.status(401).json({
 
                 erro:
@@ -361,7 +295,6 @@ export async function login(req, res) {
 
             });
 
-
             return res.status(401).json({
 
                 erro:
@@ -372,9 +305,9 @@ export async function login(req, res) {
         }
 
 
-        // --------------------------------------------------
-        // GERAR TOKEN
-        // --------------------------------------------------
+        // ==================================================
+        // GERAR TOKEN JWT
+        // ==================================================
 
         const token =
             jwt.sign(
@@ -390,7 +323,21 @@ export async function login(req, res) {
                         usuario.email,
 
                     perfil:
-                        usuario.perfil
+                        usuario.perfil,
+
+                    // ======================================
+                    // PORTAL DO ALUNO
+                    // ======================================
+                    //
+                    // Para admin/professor:
+                    // aluno_id = null
+                    //
+                    // Para aluno:
+                    // aluno_id = ID correspondente
+                    // ======================================
+
+                    aluno_id:
+                        usuario.aluno_id || null
                 },
 
                 JWT_SECRET,
@@ -403,9 +350,9 @@ export async function login(req, res) {
             );
 
 
-        // --------------------------------------------------
+        // ==================================================
         // AUDITORIA LOGIN SUCESSO
-        // --------------------------------------------------
+        // ==================================================
 
         await registrarAuditoria({
 
@@ -433,9 +380,9 @@ export async function login(req, res) {
         });
 
 
-        // --------------------------------------------------
+        // ==================================================
         // RESPOSTA
-        // --------------------------------------------------
+        // ==================================================
 
         return res.status(200).json({
 
@@ -456,7 +403,14 @@ export async function login(req, res) {
                     usuario.email,
 
                 perfil:
-                    usuario.perfil
+                    usuario.perfil,
+
+                // ==========================================
+                // ID DO ALUNO VINCULADO
+                // ==========================================
+
+                aluno_id:
+                    usuario.aluno_id || null
 
             }
 
@@ -469,7 +423,6 @@ export async function login(req, res) {
             'ERRO NO LOGIN:',
             erro
         );
-
 
         return res.status(500).json({
 
@@ -491,10 +444,6 @@ export async function alterarSenha(req, res) {
 
     try {
 
-        // --------------------------------------------------
-        // VERIFICAR AUTENTICAÇÃO
-        // --------------------------------------------------
-
         if (
             !req.usuario ||
             !req.usuario.id
@@ -509,20 +458,11 @@ export async function alterarSenha(req, res) {
 
         }
 
-
-        // --------------------------------------------------
-        // RECEBER DADOS
-        // --------------------------------------------------
-
         const {
             senhaAtual,
             novaSenha
         } = req.body || {};
 
-
-        // --------------------------------------------------
-        // VALIDAR CAMPOS
-        // --------------------------------------------------
 
         if (
             !senhaAtual ||
@@ -539,10 +479,6 @@ export async function alterarSenha(req, res) {
         }
 
 
-        // --------------------------------------------------
-        // VALIDAR TAMANHO
-        // --------------------------------------------------
-
         if (
             novaSenha.length < 6
         ) {
@@ -556,10 +492,6 @@ export async function alterarSenha(req, res) {
 
         }
 
-
-        // --------------------------------------------------
-        // IMPEDIR MESMA SENHA
-        // --------------------------------------------------
 
         if (
             senhaAtual === novaSenha
@@ -575,19 +507,11 @@ export async function alterarSenha(req, res) {
         }
 
 
-        // --------------------------------------------------
-        // BUSCAR USUÁRIO
-        // --------------------------------------------------
-
         const usuario =
             await Usuario.findByPk(
                 req.usuario.id
             );
 
-
-        // --------------------------------------------------
-        // USUÁRIO NÃO ENCONTRADO
-        // --------------------------------------------------
 
         if (!usuario) {
 
@@ -601,20 +525,12 @@ export async function alterarSenha(req, res) {
         }
 
 
-        // --------------------------------------------------
-        // CONFERIR SENHA ATUAL
-        // --------------------------------------------------
-
         const senhaAtualValida =
             await bcrypt.compare(
                 senhaAtual,
                 usuario.senha
             );
 
-
-        // --------------------------------------------------
-        // SENHA ATUAL INCORRETA
-        // --------------------------------------------------
 
         if (!senhaAtualValida) {
 
@@ -636,7 +552,6 @@ export async function alterarSenha(req, res) {
 
             });
 
-
             return res.status(401).json({
 
                 erro:
@@ -647,10 +562,6 @@ export async function alterarSenha(req, res) {
         }
 
 
-        // --------------------------------------------------
-        // GERAR HASH
-        // --------------------------------------------------
-
         const novaSenhaHash =
             await bcrypt.hash(
                 novaSenha,
@@ -658,20 +569,11 @@ export async function alterarSenha(req, res) {
             );
 
 
-        // --------------------------------------------------
-        // SALVAR
-        // --------------------------------------------------
-
         usuario.senha =
             novaSenhaHash;
 
-
         await usuario.save();
 
-
-        // --------------------------------------------------
-        // AUDITORIA
-        // --------------------------------------------------
 
         await registrarAuditoria({
 
@@ -692,10 +594,6 @@ export async function alterarSenha(req, res) {
         });
 
 
-        // --------------------------------------------------
-        // RESPOSTA
-        // --------------------------------------------------
-
         return res.status(200).json({
 
             mensagem:
@@ -710,7 +608,6 @@ export async function alterarSenha(req, res) {
             'ERRO AO ALTERAR SENHA:',
             erro
         );
-
 
         return res.status(500).json({
 
@@ -727,26 +624,14 @@ export async function alterarSenha(req, res) {
 // ======================================================
 // RECUPERAR SENHA
 // ======================================================
-//
-// Esta rota recebe o e-mail e registra a solicitação.
-// O envio real de e-mail será configurado posteriormente.
-// ======================================================
 
 export async function recuperarSenha(req, res) {
 
     try {
 
-        // --------------------------------------------------
-        // RECEBER E-MAIL
-        // --------------------------------------------------
-
         const { email } =
             req.body || {};
 
-
-        // --------------------------------------------------
-        // VALIDAR
-        // --------------------------------------------------
 
         if (
             !email ||
@@ -767,10 +652,6 @@ export async function recuperarSenha(req, res) {
             email.trim();
 
 
-        // --------------------------------------------------
-        // BUSCAR USUÁRIO
-        // --------------------------------------------------
-
         const usuario =
             await Usuario.findOne({
 
@@ -781,23 +662,9 @@ export async function recuperarSenha(req, res) {
             });
 
 
-        // --------------------------------------------------
-        // RESPOSTA PADRÃO
-        // --------------------------------------------------
-        //
-        // Mesmo que o usuário não exista, não revelamos isso
-        // diretamente na resposta.
-        //
-        // Isso evita expor quais e-mails estão cadastrados.
-        // --------------------------------------------------
-
         const mensagemPadrao =
             'Se o e-mail estiver cadastrado, as instruções de recuperação serão enviadas.';
 
-
-        // --------------------------------------------------
-        // E-MAIL NÃO CADASTRADO
-        // --------------------------------------------------
 
         if (!usuario) {
 
@@ -826,7 +693,6 @@ export async function recuperarSenha(req, res) {
 
             });
 
-
             return res.status(200).json({
 
                 mensagem:
@@ -836,10 +702,6 @@ export async function recuperarSenha(req, res) {
 
         }
 
-
-        // --------------------------------------------------
-        // AUDITORIA
-        // --------------------------------------------------
 
         await registrarAuditoria({
 
@@ -867,10 +729,6 @@ export async function recuperarSenha(req, res) {
         });
 
 
-        // --------------------------------------------------
-        // RESPOSTA
-        // --------------------------------------------------
-
         return res.status(200).json({
 
             mensagem:
@@ -885,7 +743,6 @@ export async function recuperarSenha(req, res) {
             'ERRO NA RECUPERAÇÃO DE SENHA:',
             erro
         );
-
 
         return res.status(500).json({
 

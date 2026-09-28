@@ -1,366 +1,378 @@
-// backend/src/controllers/alunoController.js
+import bcrypt from 'bcryptjs';
 
 import Aluno from '../models/Aluno.js';
 
+import Usuario from '../models/Usuario.js';
+
 
 // ======================================================
-// LISTAR TODOS OS ALUNOS
+// LISTAR ALUNOS
 // ======================================================
 
-async function listarAlunos(req, res) {
-
+const listarAlunos = async (req, res) => {
     try {
-
         const alunos = await Aluno.findAll();
 
-        res.status(200).json(alunos);
-
+        return res.status(200).json(alunos);
     } catch (erro) {
+        console.error('Erro ao listar alunos:', erro);
 
-        console.error(
-            'Erro ao listar alunos:',
-            erro
-        );
-
-        res.status(500).send(
-            'Erro ao listar alunos: ' + erro.message
-        );
-
+        return res.status(500).json({
+            erro: 'Erro ao listar alunos'
+        });
     }
-
-}
+};
 
 
 // ======================================================
 // CADASTRAR ALUNO
 // ======================================================
 
-async function cadastrarAluno(req, res) {
-
+const cadastrarAluno = async (req, res) => {
     try {
+        const {
+            nome,
+            email,
+            data_nascimento,
+            serie,
+            cpf,
+            telefone,
+            endereco,
+            fk_turma
+        } = req.body;
 
-        const dadosAluno = {
-
-            nome: req.body.nome,
-
-            email: req.body.email,
-
-            data_nascimento:
-                req.body.data_nascimento || null,
-
-            serie:
-                req.body.serie || null,
-
-            cpf:
-                req.body.cpf || null,
-
-            telefone:
-                req.body.telefone || null,
-
-            endereco:
-                req.body.endereco || null,
-
-            // O aluno pode ser cadastrado sem turma.
-            fk_turma:
-                req.body.fk_turma || null
-
-        };
-
-
-        const novoAluno =
-            await Aluno.create(dadosAluno);
-
-
-        console.log(
-            'Aluno salvo no banco:',
-            novoAluno.nome
-        );
-
-
-        res.status(201).json(novoAluno);
-
-
-    } catch (erro) {
-
-        console.error(
-            'Erro ao salvar aluno:',
-            erro
-        );
-
-
-        res.status(400).send(
-            'Erro ao salvar aluno: ' +
-            erro.message
-        );
-
-    }
-
-}
-
-
-// ======================================================
-// BUSCAR ALUNO POR ID
-// ======================================================
-
-async function buscarAluno(req, res) {
-
-    try {
-
-        const { id } = req.params;
-
-
-        const aluno =
-            await Aluno.findByPk(id);
-
-
-        if (!aluno) {
-
-            return res.status(404).send(
-                'Aluno não encontrado'
-            );
-
+        if (!nome || !email) {
+            return res.status(400).json({
+                erro: 'Nome e email são obrigatórios'
+            });
         }
 
+        const alunoExistente = await Aluno.findOne({
+            where: {
+                email
+            }
+        });
 
-        res.status(200).json(aluno);
+        if (alunoExistente) {
+            return res.status(409).json({
+                erro: 'Já existe um aluno cadastrado com este email'
+            });
+        }
 
+        const aluno = await Aluno.create({
+            nome,
+            email,
+            data_nascimento,
+            serie,
+            cpf,
+            telefone,
+            endereco,
+            fk_turma
+        });
 
+        return res.status(201).json({
+            mensagem: 'Aluno cadastrado com sucesso',
+            aluno
+        });
     } catch (erro) {
+        console.error('Erro ao cadastrar aluno:', erro);
 
-        console.error(
-            'Erro ao buscar aluno:',
-            erro
-        );
-
-
-        res.status(500).send(
-            'Erro ao buscar aluno: ' +
-            erro.message
-        );
-
+        return res.status(500).json({
+            erro: 'Erro ao cadastrar aluno'
+        });
     }
+};
 
-}
+
+// ======================================================
+// BUSCAR ALUNO
+// ======================================================
+
+const buscarAluno = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const aluno = await Aluno.findByPk(id);
+
+        if (!aluno) {
+            return res.status(404).json({
+                erro: 'Aluno não encontrado'
+            });
+        }
+
+        return res.status(200).json(aluno);
+    } catch (erro) {
+        console.error('Erro ao buscar aluno:', erro);
+
+        return res.status(500).json({
+            erro: 'Erro ao buscar aluno'
+        });
+    }
+};
 
 
 // ======================================================
 // EDITAR ALUNO
 // ======================================================
 
-async function editarAluno(req, res) {
-
+const editarAluno = async (req, res) => {
     try {
-
         const { id } = req.params;
 
-
-        const aluno =
-            await Aluno.findByPk(id);
-
+        const aluno = await Aluno.findByPk(id);
 
         if (!aluno) {
-
-            return res.status(404).send(
-                'Aluno não encontrado'
-            );
-
+            return res.status(404).json({
+                erro: 'Aluno não encontrado'
+            });
         }
 
+        const {
+            nome,
+            email,
+            data_nascimento,
+            serie,
+            cpf,
+            telefone,
+            endereco,
+            fk_turma
+        } = req.body;
+
+        if (email && email !== aluno.email) {
+            const emailExistente = await Aluno.findOne({
+                where: {
+                    email
+                }
+            });
+
+            if (emailExistente && emailExistente.id !== aluno.id) {
+                return res.status(409).json({
+                    erro: 'Já existe outro aluno cadastrado com este email'
+                });
+            }
+        }
 
         await aluno.update({
-
-            nome:
-                req.body.nome,
-
-            email:
-                req.body.email,
-
+            nome: nome ?? aluno.nome,
+            email: email ?? aluno.email,
             data_nascimento:
-                req.body.data_nascimento || null,
-
-            serie:
-                req.body.serie || null,
-
-            cpf:
-                req.body.cpf || null,
-
-            telefone:
-                req.body.telefone || null,
-
-            endereco:
-                req.body.endereco || null,
-
-            // Permite alterar ou remover a turma.
-            fk_turma:
-                req.body.fk_turma || null
-
+                data_nascimento ?? aluno.data_nascimento,
+            serie: serie ?? aluno.serie,
+            cpf: cpf ?? aluno.cpf,
+            telefone: telefone ?? aluno.telefone,
+            endereco: endereco ?? aluno.endereco,
+            fk_turma: fk_turma ?? aluno.fk_turma
         });
 
-
-        console.log(
-            'Aluno atualizado:',
-            aluno.nome
-        );
-
-
-        res.status(200).json(aluno);
-
-
+        return res.status(200).json({
+            mensagem: 'Aluno atualizado com sucesso',
+            aluno
+        });
     } catch (erro) {
+        console.error('Erro ao editar aluno:', erro);
 
-        console.error(
-            'Erro ao editar aluno:',
-            erro
-        );
-
-
-        res.status(400).send(
-            'Erro ao editar aluno: ' +
-            erro.message
-        );
-
+        return res.status(500).json({
+            erro: 'Erro ao editar aluno'
+        });
     }
-
-}
+};
 
 
 // ======================================================
 // EXCLUIR ALUNO
 // ======================================================
 
-async function excluirAluno(req, res) {
-
+const excluirAluno = async (req, res) => {
     try {
-
         const { id } = req.params;
 
-
-        const aluno =
-            await Aluno.findByPk(id);
-
+        const aluno = await Aluno.findByPk(id);
 
         if (!aluno) {
-
-            return res.status(404).send(
-                'Aluno não encontrado'
-            );
-
+            return res.status(404).json({
+                erro: 'Aluno não encontrado'
+            });
         }
-
 
         await aluno.destroy();
 
-
-        console.log(
-            'Aluno excluído:',
-            aluno.nome
-        );
-
-
-        res.status(200).json({
-
-            mensagem:
-                'Aluno excluído com sucesso!'
-
+        return res.status(200).json({
+            mensagem: 'Aluno excluído com sucesso'
         });
-
-
     } catch (erro) {
+        console.error('Erro ao excluir aluno:', erro);
 
-        console.error(
-            'Erro ao excluir aluno:',
-            erro
-        );
-
-
-        res.status(400).send(
-            'Erro ao excluir aluno: ' +
-            erro.message
-        );
-
+        return res.status(500).json({
+            erro: 'Erro ao excluir aluno'
+        });
     }
-
-}
+};
 
 
 // ======================================================
-// MISSÃO 002
-// VINCULAR ALUNO A UMA TURMA
+// VINCULAR ALUNO À TURMA
 // ======================================================
 
-async function vincularTurma(req, res) {
-
+const vincularTurma = async (req, res) => {
     try {
-
         const { id } = req.params;
-
         const { fk_turma } = req.body;
 
-
-        const aluno =
-            await Aluno.findByPk(id);
-
+        const aluno = await Aluno.findByPk(id);
 
         if (!aluno) {
-
-            return res.status(404).send(
-                'Aluno não encontrado'
-            );
-
+            return res.status(404).json({
+                erro: 'Aluno não encontrado'
+            });
         }
 
-
-        aluno.fk_turma =
-            fk_turma || null;
-
-
-        await aluno.save();
-
-
-        res.status(200).json({
-
-            mensagem:
-                'Aluno vinculado à turma com sucesso!',
-
-            aluno
-
+        await aluno.update({
+            fk_turma
         });
 
-
+        return res.status(200).json({
+            mensagem: 'Aluno vinculado à turma com sucesso',
+            aluno
+        });
     } catch (erro) {
+        console.error('Erro ao vincular aluno à turma:', erro);
 
-        console.error(
-            'Erro ao vincular turma:',
-            erro
-        );
-
-
-        res.status(400).send(
-            'Erro ao vincular turma: ' +
-            erro.message
-        );
-
+        return res.status(500).json({
+            erro: 'Erro ao vincular aluno à turma'
+        });
     }
-
-}
+};
 
 
 // ======================================================
-// EXPORTAR CONTROLLER
+// CRIAR CREDENCIAL DO ALUNO
+// MISSÃO 008
+// ======================================================
+
+const criarCredencial = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { senha } = req.body;
+
+        // --------------------------------------------------
+        // VALIDAÇÃO DA SENHA
+        // --------------------------------------------------
+
+        if (!senha) {
+            return res.status(400).json({
+                erro: 'A senha é obrigatória'
+            });
+        }
+
+        if (typeof senha !== 'string') {
+            return res.status(400).json({
+                erro: 'A senha deve ser um texto'
+            });
+        }
+
+        if (senha.length < 6) {
+            return res.status(400).json({
+                erro: 'A senha deve possuir pelo menos 6 caracteres'
+            });
+        }
+
+        // --------------------------------------------------
+        // BUSCAR ALUNO
+        // --------------------------------------------------
+
+        const aluno = await Aluno.findByPk(id);
+
+        if (!aluno) {
+            return res.status(404).json({
+                erro: 'Aluno não encontrado'
+            });
+        }
+
+        // --------------------------------------------------
+        // VERIFICAR SE JÁ EXISTE CREDENCIAL
+        // --------------------------------------------------
+
+        const credencialExistente = await Usuario.findOne({
+            where: {
+                aluno_id: aluno.id
+            }
+        });
+
+        if (credencialExistente) {
+            return res.status(409).json({
+                erro: 'Este aluno já possui uma credencial de acesso'
+            });
+        }
+
+        // --------------------------------------------------
+        // VERIFICAR EMAIL
+        // --------------------------------------------------
+
+        const emailExistente = await Usuario.findOne({
+            where: {
+                email: aluno.email
+            }
+        });
+
+        if (emailExistente) {
+            return res.status(409).json({
+                erro: 'O email deste aluno já está sendo utilizado por outro usuário'
+            });
+        }
+
+        // --------------------------------------------------
+        // GERAR HASH DA SENHA
+        // --------------------------------------------------
+
+        const senhaHash = await bcrypt.hash(senha, 10);
+
+        // --------------------------------------------------
+        // CRIAR USUÁRIO
+        // --------------------------------------------------
+
+        const usuario = await Usuario.create({
+            nome: aluno.nome,
+            email: aluno.email,
+            senha: senhaHash,
+            perfil: 'aluno',
+            aluno_id: aluno.id
+        });
+
+        // --------------------------------------------------
+        // NÃO DEVOLVER SENHA/HASH
+        // --------------------------------------------------
+
+        return res.status(201).json({
+            mensagem: 'Credencial do aluno criada com sucesso',
+            usuario: {
+                id: usuario.id,
+                nome: usuario.nome,
+                email: usuario.email,
+                perfil: usuario.perfil,
+                aluno_id: usuario.aluno_id
+            }
+        });
+    } catch (erro) {
+        console.error('Erro ao criar credencial do aluno:', erro);
+
+        return res.status(500).json({
+            erro: 'Erro ao criar credencial do aluno'
+        });
+    }
+};
+
+
+// ======================================================
+// EXPORTAÇÕES
 // ======================================================
 
 export default {
-
-    cadastrarAluno,
-
     listarAlunos,
-
+    cadastrarAluno,
     buscarAluno,
-
     editarAluno,
-
     excluirAluno,
-
-    vincularTurma
-
+    vincularTurma,
+    criarCredencial
 };
